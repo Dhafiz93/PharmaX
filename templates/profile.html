@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#00a86b">
+<title>Mon profil — PharmaX</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/topbar.css') }}">
+{% include '_head_pwa.html' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app-ui.css') }}">
+</head>
+<body class="ui-body">
+
+{% include '_topbar.html' %}
+
+<main class="ui-main">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="ui-flash-stack">
+      {% for category, message in messages %}
+      <div class="ui-flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Identité -->
+  <section class="profile-hero">
+    <div class="profile-avatar">
+      <div class="initials">{{ initials }}</div>
+      <span class="presence"></span>
+    </div>
+    <h1>{{ profile.full_name or profile.username }}</h1>
+    <p class="email">{{ profile.email or '@' ~ profile.username }}</p>
+    <p class="status">En ligne</p>
+    <a href="{{ url_for('logout') }}" class="ui-btn-outline"><i class="ri-logout-box-r-line"></i> Se déconnecter</a>
+  </section>
+
+  <!-- Onglets -->
+  <div class="profile-tabs">
+    <button class="profile-tab active" data-panel="alertes" type="button"><i class="ri-notification-3-line"></i> Alertes</button>
+    <button class="profile-tab" data-panel="favoris" type="button"><i class="ri-heart-line"></i> Favoris</button>
+    <button class="profile-tab" data-panel="recherches" type="button"><i class="ri-time-line"></i> Recherches</button>
+  </div>
+
+  <!-- Alertes -->
+  <section class="tab-panel active" id="panel-alertes">
+    {% for alert in alerts %}
+    <div class="ui-card">
+      <div class="ui-card-head">
+        <strong>{{ alert.name }}</strong>
+        {% if alert.is_today %}
+        <span class="ui-badge on-duty">Ouvert · De garde</span>
+        {% else %}
+        <span class="ui-badge off-duty">Garde à venir</span>
+        {% endif %}
+      </div>
+      <div class="duty-band">
+        <i class="ri-calendar-line"></i>
+        <span><b>Période de garde :</b> {{ alert.start }} au {{ alert.end }}</span>
+      </div>
+    </div>
+    {% else %}
+    <div class="ui-empty">
+      <div class="circle"><i class="ri-notification-off-line"></i></div>
+      <p>Aucune alerte de garde pour vos favoris.</p>
+      <a href="{{ url_for('pharmacies') }}" class="ui-btn-outline">Choisir mes pharmacies</a>
+    </div>
+    {% endfor %}
+  </section>
+
+  <!-- Favoris -->
+  <section class="tab-panel" id="panel-favoris">
+    {% for item in favorites %}
+    <div class="pharmacy-item">
+      <div class="pharmacy-top">
+        <span class="pharmacy-mark"><i class="ri-add-line"></i></span>
+        <div class="pharmacy-info">
+          <strong>{{ item.name }}</strong>
+          <div class="address">{{ item.address or item.quartier or 'Adresse à compléter' }}</div>
+          <div class="added">Ajouté le {{ item.added_on }}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          {% if item.is_on_guard %}<span class="ui-badge on-duty">De garde</span>{% endif %}
+          <form method="post" action="{{ url_for('toggle_favorite', pharmacy_id=item.id) }}">
+            <button class="ui-btn-link" type="submit">Retirer</button>
+          </form>
+        </div>
+      </div>
+      {% if item.duty_start %}
+      <div class="duty-band">
+        <i class="ri-calendar-line"></i>
+        <span><b>Garde :</b> {{ item.duty_start }} au {{ item.duty_end }}</span>
+      </div>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="ui-empty">
+      <div class="circle"><i class="ri-heart-line"></i></div>
+      <p>Aucune pharmacie favorite pour l'instant.</p>
+      <a href="{{ url_for('pharmacies') }}" class="ui-btn-outline">Parcourir l'annuaire</a>
+    </div>
+    {% endfor %}
+  </section>
+
+  <!-- Recherches -->
+  <section class="tab-panel" id="panel-recherches">
+    <div class="history-head">
+      <span>{{ history|length }} recherche(s) récente(s)</span>
+      {% if history %}
+      <form method="post" action="{{ url_for('clear_search_history') }}"
+            onsubmit="return confirm('Effacer tout votre historique de recherche ?');">
+        <button class="ui-btn-link" type="submit">Vider l'historique</button>
+      </form>
+      {% endif %}
+    </div>
+
+    {% if history %}
+    <div class="history-table-wrap">
+      <table class="history-table">
+        <thead><tr><th>Requête</th><th>Résultats</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for h in history %}
+          <tr>
+            <td>{{ h.query }}</td>
+            <td><span class="count {% if not h.results_count %}zero{% endif %}">{{ h.results_count }}</span></td>
+            <td class="date">{{ h.day }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="ui-empty">
+      <div class="circle"><i class="ri-time-line"></i></div>
+      <p>Aucun historique de recherche.</p>
+      <a href="{{ url_for('assistant_chat') }}" class="ui-btn-outline">Poser une question à l'assistant</a>
+    </div>
+    {% endif %}
+  </section>
+
+</main>
+
+<script>
+  document.querySelectorAll('.profile-tab').forEach(function (tab) {
+    tab.onclick = function () {
+      document.querySelectorAll('.profile-tab').forEach(function (t) { t.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+      history.replaceState(null, '', '?onglet=' + tab.dataset.panel);
+    };
+  });
+
+  // Ouverture directe sur un onglet via ?onglet=favoris
+  var wanted = new URLSearchParams(location.search).get('onglet');
+  if (wanted) {
+    var target = document.querySelector('.profile-tab[data-panel="' + wanted + '"]');
+    if (target) target.click();
+  }
+</script>
+{% include '_splash.html' %}
+<script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+</body>
+</html>

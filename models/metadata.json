@@ -1,0 +1,30 @@
+{
+  "model": "linearsvc_calibre",
+  "labels": [
+    "emergency",
+    "greeting",
+    "guard",
+    "help",
+    "nearest_guard",
+    "route",
+    "stats",
+    "unknown"
+  ],
+  "confidence_threshold": 0.6,
+  "cv_f1_macro_mean": 0.8616520431384453,
+  "cv_f1_macro_std": 0.017707244605484892,
+  "test_f1_macro": 0.8987906911902773,
+  "test_accuracy": 0.906886517943744,
+  "test_f1_macro_thresholded": 0.914,
+  "baseline_accuracy": 0.40446168768186225,
+  "baseline_f1_macro": 0.41244773857546996,
+  "n_train": 3969,
+  "n_test": 1031,
+  "n_total": 5000,
+  "dataset": "dataset_5000.csv",
+  "emergency_threshold": 0.5,
+  "emergency_recall_model": 0.9927,
+  "emergency_recall_model_and_rules": 1.0,
+  "emergency_false_alarms": 13,
+  "n_emergency": 1046
+}

@@ -1,0 +1,93 @@
+{% extends 'admin_base.html' %}
+{% block title %}Gestion des pharmacies - PharmaX{% endblock %}
+{% block page_title %}Gestion des pharmacies{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('add_pharmacy') }}" class="adm-btn"><i class="ri-add-line"></i> Ajouter une pharmacie</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="adm-stat-grid">
+  <div class="adm-stat">
+    <div class="stat-icon"><i class="ri-building-line"></i></div>
+    <h3>{{ counts.total }}</h3>
+    <p>Pharmacies enregistrées</p>
+  </div>
+  <div class="adm-stat">
+    <div class="stat-icon blue"><i class="ri-checkbox-circle-line"></i></div>
+    <h3>{{ counts.active }}</h3>
+    <p>Actives</p>
+  </div>
+  <div class="adm-stat">
+    <div class="stat-icon rose"><i class="ri-map-pin-line"></i></div>
+    <h3>{{ counts.no_gps }}</h3>
+    <p>Sans coordonnées GPS</p>
+  </div>
+</div>
+
+<div class="adm-card" style="padding: 0;">
+
+  <form method="get" class="adm-form-row" style="padding: 16px 20px; border-bottom: 1px solid var(--adm-line);">
+    <input type="search" name="search" value="{{ search }}" class="adm-input pill" style="max-width: 260px;"
+           placeholder="Rechercher par nom, quartier ou adresse">
+    <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer;">
+      <input type="checkbox" name="no_gps" value="1" {% if no_gps %}checked{% endif %}
+             onchange="this.form.submit()" style="width:16px;height:16px;accent-color:var(--adm-primary);">
+      Sans coordonnées GPS
+    </label>
+    <span class="adm-card-subtitle" style="margin:0;">{{ pharmacies|length }} résultat(s)</span>
+    <span style="margin-left:auto; display:flex; gap:8px;">
+      <button class="adm-icon-btn" type="submit" title="Actualiser"><i class="ri-refresh-line"></i></button>
+      <a href="{{ url_for('add_pharmacy') }}" class="adm-btn small"><i class="ri-add-line"></i> Nouvelle pharmacie</a>
+    </span>
+  </form>
+
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>Pharmacie</th>
+          <th>Quartier</th>
+          <th>Téléphone</th>
+          <th>Coordonnées</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in pharmacies %}
+        <tr>
+          <td class="strong">{{ item.name }}</td>
+          <td class="muted">{{ item.quartier or '—' }}</td>
+          <td class="muted">{{ item.phone or '—' }}</td>
+          <td class="muted">
+            {% if item.latitude and item.longitude %}{{ '%.4f'|format(item.latitude) }}, {{ '%.4f'|format(item.longitude) }}
+            {% else %}<span class="adm-pill red">Manquantes</span>{% endif %}
+          </td>
+          <td>
+            {% if item.status == 'active' %}<span class="adm-pill green">Active</span>
+            {% else %}<span class="adm-pill grey">{{ item.status or 'inactive' }}</span>{% endif %}
+          </td>
+          <td>
+            <div style="display:flex; gap:2px;">
+              <a class="adm-icon-btn" href="{{ url_for('edit_pharmacy', pharmacy_id=item.id) }}" title="Modifier"><i class="ri-pencil-line"></i></a>
+              <form method="post" action="{{ url_for('delete_pharmacy', pharmacy_id=item.id) }}"
+                    onsubmit="return confirm('Supprimer {{ item.name }} et toutes ses gardes ?');" style="display:inline;">
+                <button class="adm-icon-btn danger" title="Supprimer"><i class="ri-delete-bin-line"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6">
+          <div class="adm-empty"><i class="ri-search-line"></i>Aucune pharmacie ne correspond à cette recherche.</div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+{% endblock %}

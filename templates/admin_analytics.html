@@ -1,0 +1,209 @@
+{% extends 'admin_base.html' %}
+{% block title %}Analytique - PharmaX{% endblock %}
+{% block page_title %}Analytique{% endblock %}
+
+{% block content %}
+
+<div class="adm-stat-grid">
+  <div class="adm-stat">
+    <div class="stat-icon"><i class="ri-calendar-check-line"></i></div>
+    <h3>{{ metrics.total_guards }}</h3>
+    <p>Jours de garde enregistrés</p>
+  </div>
+  <div class="adm-stat">
+    <div class="stat-icon blue"><i class="ri-building-line"></i></div>
+    <h3>{{ metrics.covered }}</h3>
+    <p>Pharmacies ayant assuré une garde</p>
+  </div>
+  <div class="adm-stat">
+    <div class="stat-icon amber"><i class="ri-chat-3-line"></i></div>
+    <h3>{{ metrics.chat_logs }}</h3>
+    <p>Échanges avec l'assistant</p>
+  </div>
+  <div class="adm-stat">
+    <div class="stat-icon rose"><i class="ri-download-cloud-line"></i></div>
+    <h3>{{ metrics.scraped_total }}</h3>
+    <p>Entrées collectées (INAM)</p>
+  </div>
+</div>
+
+<div class="adm-card">
+  <h2 class="adm-card-title">Performance du NLU en usage réel</h2>
+  <p class="adm-card-subtitle">
+    Mesuré sur les {{ nlu.total_messages }} message(s) réellement envoyés à l'assistant,
+    et non sur le jeu de test d'entraînement.
+  </p>
+
+  {% if nlu.avis_total %}
+  <div class="adm-stat-grid" style="margin-top:14px;">
+    <div class="adm-stat">
+      <div class="stat-icon"><i class="ri-thumb-up-line"></i></div>
+      <h3>{{ nlu.taux_reussite }}%</h3>
+      <p>Taux de réussite ({{ nlu.avis_utiles }} réponse(s) jugée(s) utile(s))</p>
+    </div>
+    <div class="adm-stat">
+      <div class="stat-icon rose"><i class="ri-thumb-down-line"></i></div>
+      <h3>{{ nlu.taux_echec }}%</h3>
+      <p>Taux d'échec ({{ nlu.avis_ratees }} réponse(s) jugée(s) à côté)</p>
+    </div>
+    <div class="adm-stat">
+      <div class="stat-icon blue"><i class="ri-feedback-line"></i></div>
+      <h3>{{ nlu.avis_total }}</h3>
+      <p>Avis reçus · {{ nlu.couverture_avis }}% des messages</p>
+    </div>
+    <!--
+    <div class="adm-stat">
+      <div class="stat-icon amber"><i class="ri-percent-line"></i></div>
+      <h3>{{ nlu.confiance_moyenne if nlu.confiance_moyenne else '—' }}</h3>
+      <p>Confiance moyenne du modèle (seuil {{ nlu.seuil }})</p>
+    </div>
+    -->
+  </div>
+  {% else %}
+  <div class="adm-flash info" style="margin-top:12px;">
+    Aucun avis utilisateur pour l'instant. Le taux de réussite se calcule à partir des
+    pouces « utile » et « à côté » affichés sous chaque réponse de l'assistant :
+    il apparaîtra dès les premiers retours.
+  </div>
+  <div class="adm-stat-grid" style="margin-top:16px;">
+    <div class="adm-stat">
+      <div class="stat-icon"><i class="ri-chat-3-line"></i></div>
+      <h3>{{ nlu.total_messages }}</h3>
+      <p>Messages traités</p>
+    </div>
+    <div class="adm-stat">
+      <div class="stat-icon amber"><i class="ri-percent-line"></i></div>
+      <h3>{{ nlu.confiance_moyenne if nlu.confiance_moyenne else '—' }}</h3>
+      <p>Confiance moyenne du modèle</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <h3 style="font-size:14px; margin:22px 0 6px;">Qui décide, en pratique</h3>
+  <p class="adm-card-subtitle" style="margin:0 0 12px;">
+    Un fort taux de repli sur les mots-clés signale des tournures que le modèle
+    ne reconnaît pas encore : ce sont les messages à annoter en priorité pour le
+    prochain réentraînement.
+  </p>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <div style="flex:1; display:flex; height:14px; border-radius:999px; overflow:hidden; background:#f1f5f9;">
+      <div style="width:{{ nlu.part_modele }}%; background:var(--adm-primary);"></div>
+      <div style="width:{{ nlu.part_regles }}%; background:#f59e0b;"></div>
+    </div>
+  </div>
+  <p class="adm-card-subtitle" style="margin-top:10px;">
+    <span class="adm-pill green">{{ nlu.part_modele }}% classifieur ({{ nlu.traites_modele }})</span>
+    <span class="adm-pill amber">{{ nlu.part_regles }}% repli mots-clés ({{ nlu.traites_regles }})</span>
+    {% if nlu.non_mesures %}
+    <span class="adm-pill grey">{{ nlu.non_mesures }} message(s) antérieur(s) au suivi</span>
+    {% endif %}
+  </p>
+</div>
+
+<div class="adm-card" style="padding:0;">
+  <div style="padding:20px 20px 0;">
+    <h2 class="adm-card-title">Détail par intention</h2>
+    <p class="adm-card-subtitle">Volume réel, confiance moyenne et satisfaction.</p>
+  </div>
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead>
+        <tr><th>Intention</th><th>Messages</th><th>Part</th><th>Confiance</th>
+            <th>Repli mots-clés</th><th>Avis</th><th>Réussite</th></tr>
+      </thead>
+      <tbody>
+        {% for ligne in intentions %}
+        <tr>
+          <td class="strong">{{ ligne.intent }}</td>
+          <td>{{ ligne.n }}</td>
+          <td class="muted">{{ ligne.part }}%</td>
+          <td class="muted">{{ ligne.confiance if ligne.confiance else '—' }}</td>
+          <td class="muted">{{ ligne.repli }}</td>
+          <td class="muted">{{ ligne.avis or '—' }}</td>
+          <td>
+            {% if ligne.taux is none %}<span class="muted">—</span>
+            {% elif ligne.taux >= 80 %}<span class="adm-pill green">{{ ligne.taux }}%</span>
+            {% elif ligne.taux >= 50 %}<span class="adm-pill amber">{{ ligne.taux }}%</span>
+            {% else %}<span class="adm-pill red">{{ ligne.taux }}%</span>{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7"><div class="adm-empty"><i class="ri-chat-3-line"></i>Aucun message échangé.</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if ratees %}
+<div class="adm-card" style="padding:0;">
+  <div style="padding:20px 20px 0;">
+    <h2 class="adm-card-title">Messages jugés mal compris</h2>
+    <p class="adm-card-subtitle">
+      À annoter puis à ajouter au corpus pour le prochain réentraînement.
+    </p>
+  </div>
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead><tr><th>Message</th><th>Intention retenue</th><th>Confiance</th><th>Décidé par</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for r in ratees %}
+        <tr>
+          <td>{{ r.message }}</td>
+          <td class="muted">{{ r.intent }}</td>
+          <td class="muted">{{ '%.2f'|format(r.confidence) if r.confidence else '—' }}</td>
+          <td class="muted">{{ 'classifieur' if r.intent_source == 'modele' else 'mots-clés' }}</td>
+          <td class="muted">{{ (r.created_at or '')[:16] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="adm-card">
+  <h2 class="adm-card-title">Gardes par mois</h2>
+  <p class="adm-card-subtitle">Nombre de jours de garde enregistrés, tous établissements confondus.</p>
+  {% if by_month %}
+  <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
+    {% for m in by_month %}
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="width:90px; font-size:13px; color:var(--adm-muted);">{{ m.month }}</span>
+      <div style="flex:1; background:#f1f5f9; border-radius:999px; height:12px; overflow:hidden;">
+        <div style="width:{{ m.pct }}%; height:100%; background:var(--adm-primary); border-radius:999px;"></div>
+      </div>
+      <span style="width:56px; text-align:right; font-size:13px; font-weight:600;">{{ m.count }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="adm-empty"><i class="ri-bar-chart-line"></i>Pas encore de données de garde.</div>
+  {% endif %}
+</div>
+
+<div class="adm-card" style="padding:0;">
+  <div style="padding:20px 20px 0;">
+    <h2 class="adm-card-title">Pharmacies les plus sollicitées</h2>
+    <p class="adm-card-subtitle">Classement par nombre de jours de garde.</p>
+  </div>
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead><tr><th>#</th><th>Pharmacie</th><th>Quartier</th><th>Jours de garde</th></tr></thead>
+      <tbody>
+        {% for row in top_pharmacies %}
+        <tr>
+          <td class="muted">{{ loop.index }}</td>
+          <td class="strong">{{ row.name }}</td>
+          <td class="muted">{{ row.quartier or '—' }}</td>
+          <td><span class="adm-pill green">{{ row.days }} j</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4"><div class="adm-empty"><i class="ri-bar-chart-line"></i>Aucune donnée.</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

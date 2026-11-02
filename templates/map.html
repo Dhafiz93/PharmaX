@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Carte SIG - PharmaGeo Lomé{% endblock %}
+{% block content %}
+<section class="container section-space">
+    <div class="section-header">
+        <h1 class="page-title">Carte SIG des pharmacies</h1>
+        <p class="page-subtitle">Visualisation spatiale des pharmacies recensées et mise en évidence des officines de garde.</p>
+    </div>
+    <div class="section-card">
+        <div id="fullMap" class="map-frame large"></div>
+    </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+window.PHARMACIES_DATA = {{ features|tojson }};
+window.MAP_TARGET = 'fullMap';
+window.MAP_MODE = 'overview';
+</script>
+{% endblock %}

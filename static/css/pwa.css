@@ -1,0 +1,539 @@
+/* ===========================================================================
+   PharmaX — écran de démarrage, bannière d'installation, carrousel d'impact
+   =========================================================================== */
+
+:root {
+  --pwa-vert: #00a86b;
+  --pwa-vert-fonce: #018a58;
+  --pwa-vert-clair: #e6f6f0;
+  --pwa-ligne: #e2e8f0;
+  --pwa-texte: #0f172a;
+  --pwa-gris: #64748b;
+}
+
+/* ---------------------------------------------------------------------------
+   Logos dans les en-têtes
+   --------------------------------------------------------------------------- */
+.brand-logo {
+  height: 30px;
+  width: auto;
+  display: block;
+}
+
+.brand-logo-icon {
+  height: 32px;
+  width: 32px;
+  object-fit: contain;
+  display: block;
+}
+
+/* ---------------------------------------------------------------------------
+   1. Écran de démarrage
+   --------------------------------------------------------------------------- */
+body.splash-actif { overflow: hidden; }
+
+/* L'écran de démarrage ne concerne que le mobile : sur poste fixe, la page
+   s'affiche directement, sans écran intermédiaire. */
+.pharmax-splash { display: none; }
+
+@media (max-width: 900px) {
+  .pharmax-splash { display: flex; }
+}
+
+.pharmax-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  background: radial-gradient(circle at 50% 38%, #ffffff 0%, #eef8f3 60%, #e3f3ec 100%);
+  transition: opacity .45s ease, visibility .45s ease;
+}
+
+.pharmax-splash.splash-sortie {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.splash-logo-zone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Halo pulsé derrière le logo */
+.splash-logo-zone::before,
+.splash-logo-zone::after {
+  content: "";
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: rgba(0, 168, 107, 0.14);
+  animation: splashPulse 2.4s ease-out infinite;
+}
+
+.splash-logo-zone::after { animation-delay: 1.2s; }
+
+@keyframes splashPulse {
+  0%   { transform: scale(0.65); opacity: 0.85; }
+  100% { transform: scale(1.5);  opacity: 0; }
+}
+
+.pharmax-splash img {
+  position: relative;
+  width: 120px;
+  height: auto;
+  animation: splashApparition .8s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes splashApparition {
+  from { opacity: 0; transform: scale(.72) translateY(14px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.splash-titre {
+  text-align: center;
+  animation: splashApparition .8s .18s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.splash-titre strong {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--pwa-texte);
+  letter-spacing: -0.01em;
+}
+
+.splash-titre small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--pwa-gris);
+}
+
+/* Indicateur de chargement discret */
+.splash-loader {
+  width: 130px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(0, 168, 107, 0.16);
+  overflow: hidden;
+  animation: splashApparition .8s .3s ease both;
+}
+
+.splash-loader span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--pwa-vert);
+  animation: splashChargement 1.1s ease-in-out infinite;
+}
+
+@keyframes splashChargement {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(325%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pharmax-splash img,
+  .splash-titre,
+  .splash-loader { animation: none; }
+  .splash-logo-zone::before,
+  .splash-logo-zone::after { animation: none; opacity: 0; }
+  .splash-loader span { animation: none; width: 100%; }
+}
+
+/* ---------------------------------------------------------------------------
+   2. Bannière d'installation
+   --------------------------------------------------------------------------- */
+.pwa-banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147482000;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid var(--pwa-ligne);
+  box-shadow: 0 12px 34px -10px rgba(15, 40, 30, 0.28);
+  backdrop-filter: blur(10px);
+  transform: translateY(140%);
+  opacity: 0;
+  transition: transform .35s cubic-bezier(.16, 1, .3, 1), opacity .35s ease;
+}
+
+.pwa-banner.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.pwa-banner-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.pwa-banner-texte { flex: 1; min-width: 0; }
+
+.pwa-banner-texte strong {
+  display: block;
+  font-size: 14.5px;
+  color: var(--pwa-texte);
+}
+
+.pwa-banner-texte small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--pwa-gris);
+  line-height: 1.4;
+}
+
+.pwa-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pwa-btn-installer {
+  border: none;
+  background: var(--pwa-vert);
+  color: white;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 22px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.pwa-btn-installer:hover { background: var(--pwa-vert-fonce); }
+
+.pwa-btn-fermer {
+  border: none;
+  background: none;
+  color: #94a3b8;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.pwa-btn-fermer:hover { background: #f1f5f9; color: var(--pwa-texte); }
+
+/* La bannière ne doit pas masquer la barre de navigation basse */
+@media (max-width: 900px) {
+  .pwa-banner { bottom: 72px; }
+}
+
+/* ---------------------------------------------------------------------------
+   3. Défilement principal en volets pleine page (mobile)
+   Chaque étape occupe tout l'écran, avec son propre dégradé et une carte en
+   verre dépoli. Sur grand écran, tout redevient une page classique.
+   --------------------------------------------------------------------------- */
+.app-flow { width: 100%; }
+.flow-controls { display: none; }
+.swipe-indicator { display: none; }
+
+@media (max-width: 900px) {
+
+  /* --- Conteneur et volets --- */
+  .app-flow {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    height: 100dvh;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .app-flow::-webkit-scrollbar { display: none; }
+
+  .flow-panel {
+    position: relative;
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 28px 20px 128px;
+  }
+
+  .flow-panel.flow-login { justify-content: flex-start; padding-top: 34px; }
+
+  .form-section {
+    padding: 0 !important;
+    display: block;
+    min-height: 100dvh;
+    background: none;
+  }
+
+  /* --- Dégradés thématiques, déclinés dans le vert de la marque --- */
+  .theme-urgence   { background: linear-gradient(150deg, #0f172a 0%, #14532d 100%); }
+  .theme-proximite { background: linear-gradient(150deg, #0f172a 0%, #0e4f6b 100%); }
+  .theme-guidage   { background: linear-gradient(150deg, #0f172a 0%, #016b45 100%); }
+  .theme-assistant { background: linear-gradient(150deg, #0f172a 0%, #00784c 100%); }
+  .theme-login     { background: linear-gradient(160deg, #14532d 0%, #0f172a 100%); }
+
+  /* --- Carte en verre dépoli --- */
+  .glass-card {
+    width: 100%;
+    max-width: 380px;
+    padding: 28px 22px;
+    border-radius: 24px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    transform: translateX(38px);
+    opacity: 0;
+    transition: transform .6s cubic-bezier(.16, 1, .3, 1), opacity .6s ease;
+  }
+
+  .flow-panel.actif .glass-card { transform: translateX(0); opacity: 1; }
+
+  /* --- Contenu d'un volet de présentation --- */
+  .onboarding-visuel {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 18px;
+    padding: 12px;
+    margin-bottom: 22px;
+  }
+
+  .onboarding-visuel.visuel-urgence { background: transparent; padding: 0; }
+  .onboarding-visuel svg { display: block; width: 100%; height: auto; border-radius: 12px; }
+
+  .onboarding-eyebrow {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #7ee2b8;
+    margin-bottom: 10px;
+  }
+
+  .onboarding-slide h3 {
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.45;
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  /* --- Invitation à glisser --- */
+  .swipe-indicator {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: none;
+    background: none;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 8px;
+    animation: glisserDroite 1.8s infinite ease-in-out;
+  }
+
+  .swipe-indicator i { font-size: 20px; }
+
+  @keyframes glisserDroite {
+    0%, 100% { transform: translateY(-50%) translateX(0); }
+    50%      { transform: translateY(-50%) translateX(7px); }
+  }
+
+  /* --- Commandes fixes --- */
+  .flow-controls {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: block;
+    padding: 12px 20px calc(18px + env(safe-area-inset-bottom));
+    transition: opacity .3s ease, transform .3s ease;
+  }
+
+  .flow-controls.masquee { opacity: 0; transform: translateY(100%); pointer-events: none; }
+
+  .flow-skip {
+    position: fixed;
+    top: calc(14px + env(safe-area-inset-top));
+    right: 16px;
+    z-index: 41;
+    border: none;
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 7px 16px;
+    border-radius: 999px;
+    font-family: inherit;
+    backdrop-filter: blur(8px);
+  }
+
+  .flow-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+
+  .flow-dot {
+    width: 9px;
+    height: 9px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    transition: all .3s ease;
+  }
+
+  .flow-dot.actif { width: 26px; border-radius: 999px; background: #ffffff; }
+
+  .flow-next {
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    background: var(--pwa-vert);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 10px 24px -10px rgba(0, 0, 0, .5);
+  }
+
+  .flow-next:active { transform: scale(.98); }
+  .flow-next i { font-size: 20px; line-height: 1; }
+
+  /* --- Volet de connexion : la carte adopte le même verre dépoli --- */
+  .flow-login .mobile-brand { display: block; margin-bottom: 18px; }
+  .flow-login .mobile-brand h2 { color: #ffffff; }
+  .flow-login .mobile-brand p { color: rgba(255, 255, 255, 0.75); }
+
+  .flow-login .auth-card {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .flow-login .form-label,
+  .flow-login .auth-card h2 { color: #ffffff; }
+
+  .flow-login .tab-switcher { background: rgba(255, 255, 255, 0.12); }
+  .flow-login .tab-btn { color: rgba(255, 255, 255, 0.75); }
+  .flow-login .tab-btn.active { background: #ffffff; color: #14532d; }
+
+  .flow-login .form-input {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+  }
+
+  .flow-login .form-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+
+  .flow-login .form-input:focus {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: #7ee2b8;
+    box-shadow: 0 0 0 3px rgba(126, 226, 184, .18);
+  }
+
+  .flow-login .input-wrapper i { color: rgba(255, 255, 255, 0.6); }
+  .flow-login .forgot-link { color: #7ee2b8; }
+
+  .flow-login .divider span { color: rgba(255, 255, 255, 0.7); background: transparent; }
+  .flow-login .divider::before,
+  .flow-login .divider::after { border-color: rgba(255, 255, 255, 0.2); }
+
+  .flow-login .btn-guest {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+  }
+
+  .flow-login .guest-hint,
+  .flow-login .admin-link { color: rgba(255, 255, 255, 0.65); }
+
+  .flow-login .register-notice {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #d7f5e7;
+  }
+
+  .flow-login .flash-item {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+
+  .flow-login .flash-item.danger { background: rgba(239, 68, 68, .22); border-color: rgba(254, 202, 202, .5); }
+
+  /* Bouton d'installation, révélé par le script si le navigateur le permet */
+  .btn-installer-flow {
+    width: 100%;
+    margin-top: 14px;
+    padding: 13px;
+    border-radius: 24px;
+    border: none;
+    background: var(--pwa-vert);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-installer-flow:active { transform: scale(.98); }
+}
+
+/* Grand écran : le parcours en volets ne s'applique pas — les services sont
+   présentés dans le panneau vert de la page d'accueil. */
+@media (min-width: 901px) {
+  .app-flow { display: block; }
+  .flow-panel.onboarding-slide { display: none; }
+  .flow-panel.flow-login { display: block; }
+  .btn-installer-flow { display: none; }
+}

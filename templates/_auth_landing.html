@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>PharmaX — Pharmacies de garde à Lomé</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  {% include '_head_pwa.html' %}
+
+  <style>
+    :root {
+      --primary-green: #00a86b;
+      --primary-green-dark: #008f5a;
+      --bg-green: #00a86b;
+      --bg-light: #f4f6f9;
+      --card-bg: #ffffff;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+      --input-bg: #eef2f6;
+      --input-border: #cbd5e1;
+      --accent-blue: #0284c7;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body, html { width: 100%; background-color: var(--bg-light); }
+
+    /* =====================================================================
+       DISPOSITION EN DEUX COLONNES (ordinateur)
+       ===================================================================== */
+    .page-container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .left-panel {
+      flex: 1.2;
+      background-color: var(--bg-green);
+      color: #ffffff;
+      padding: 48px 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .left-panel::before {
+      content: "";
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 450px;
+      height: 450px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* --- En-tête de marque --- */
+    .lp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+    }
+
+    .brand-icon img { width: 100%; height: 100%; object-fit: contain; }
+
+    .btn-login-nav {
+      display: none;
+      background: #ffffff;
+      color: var(--primary-green);
+      padding: 8px 18px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    /* --- Accroche --- */
+    .hero-content { margin: 28px 0 20px 0; max-width: 580px; z-index: 1; }
+
+    .hero-title {
+      font-size: 2.3rem;
+      line-height: 1.25;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .hero-description { font-size: 1rem; line-height: 1.5; opacity: 0.9; }
+
+    /* --- Services : liste sur ordinateur --- */
+    .features-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 16px 0;
+      max-width: 540px;
+      z-index: 1;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .feature-card:hover { background: rgba(255, 255, 255, 0.18); transform: translateX(4px); }
+
+    .feature-icon-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-info h4 { font-size: 0.98rem; font-weight: 700; margin-bottom: 2px; }
+    .feature-info p { font-size: 0.85rem; line-height: 1.35; opacity: 0.88; }
+
+    /* --- Services : carrousel sur mobile --- */
+    .carousel-container {
+      display: none;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto 24px auto;
+      text-align: left;
+      overflow: hidden;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .carousel-track { display: flex; transition: transform 0.4s ease-in-out; width: 100%; }
+
+    .carousel-slide {
+      min-width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .slide-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .slide-text h4 { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+    .slide-text p { font-size: 0.82rem; opacity: 0.9; line-height: 1.35; }
+
+    .carousel-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .carousel-dots { display: flex; gap: 6px; }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      border: none;
+      padding: 0;
+      transition: all .25s ease;
+    }
+
+    .dot.active { width: 20px; border-radius: 8px; background: #ffffff; }
+
+    .carousel-arrows { display: flex; gap: 6px; }
+
+    .arrow-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+    }
+
+    /* --- Appel à l'action (mobile) --- */
+    .cta-wrapper { display: none; justify-content: center; margin-bottom: 24px; width: 100%; z-index: 1; }
+
+    .btn-primary-cta {
+      background: #ffffff;
+      color: var(--primary-green);
+      padding: 14px 28px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 0.95rem;
+      width: 100%;
+      max-width: 320px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    /* --- Statistiques --- */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      max-width: 540px;
+      margin-top: 10px;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .stat-card {
+      background: rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-card h5 { font-size: 0.95rem; font-weight: 800; margin-bottom: 4px; }
+    .stat-card p { font-size: 0.75rem; opacity: 0.82; line-height: 1.2; }
+
+    /* =====================================================================
+       COLONNE DROITE : FORMULAIRE
+       ===================================================================== */
+    .right-panel {
+      flex: 1;
+      background-color: var(--bg-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+    }
+
+    .auth-card {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 440px;
+      border-radius: 24px;
+      padding: 36px 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+      scroll-margin-top: 20px;
+    }
+
+    .flash-stack { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+
+    .flash-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      color: var(--text-dark);
+    }
+
+    .flash-item.danger { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+    .flash-item.success { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+    .flash-item.info { background: #f0f9ff; border-color: #bae6fd; color: #0369a1; }
+    .flash-item.warning { background: #fffbeb; border-color: #fde68a; color: #b45309; }
+
+    .tab-switcher {
+      display: flex;
+      background-color: #f1f5f9;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 28px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .tab-btn.active { background: #ffffff; color: var(--text-dark); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+
+    .form-group { margin-bottom: 20px; }
+
+    .form-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+
+    label { font-size: 0.88rem; font-weight: 600; color: var(--text-dark); }
+
+    .forgot-link { font-size: 0.83rem; color: var(--accent-blue); text-decoration: none; font-weight: 600; }
+    .forgot-link:hover { text-decoration: underline; }
+
+    .input-wrapper { position: relative; display: flex; align-items: center; margin-top: 6px; }
+
+    .input-icon-left { position: absolute; left: 14px; color: #94a3b8; }
+    .input-icon-right { position: absolute; right: 14px; color: #94a3b8; cursor: pointer; }
+
+    .input-field {
+      width: 100%;
+      padding: 12px 40px;
+      background-color: var(--input-bg);
+      border: 1px solid transparent;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      color: var(--text-dark);
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .input-field:focus {
+      border-color: var(--primary-green);
+      background-color: #ffffff;
+      box-shadow: 0 0 0 4px rgba(0, 168, 107, 0.1);
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background-color: var(--primary-green);
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      font-family: inherit;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-submit:hover { background-color: var(--primary-green-dark); }
+
+    .register-only { display: none; }
+    body.register-mode .register-only { display: block; }
+
+    .register-notice {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      color: #0369a1;
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+
+    .register-notice.show { display: block; }
+
+    .admin-link-wrapper { text-align: center; margin-top: 16px; }
+    .admin-link { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; }
+    .admin-link:hover { color: var(--text-dark); }
+
+    .divider { display: flex; align-items: center; margin: 24px 0; }
+    .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background-color: #e2e8f0; }
+    .divider span { padding: 0 12px; font-size: 0.8rem; color: #94a3b8; }
+
+    .btn-guest {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      background-color: #ffffff;
+      color: var(--text-dark);
+      border: 1.5px dashed var(--input-border);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .btn-guest:hover { background-color: #f8fafc; }
+
+    .guest-note { text-align: center; font-size: 0.78rem; color: #94a3b8; margin-top: 10px; }
+
+    .btn-installer-flow {
+      width: 100%;
+      margin-top: 14px;
+      padding: 13px;
+      border-radius: 12px;
+      border: none;
+      background: var(--primary-green);
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* L'installation d'une application n'a de sens que sur mobile */
+    @media (min-width: 993px) {
+      .btn-installer-flow { display: none !important; }
+    }
+
+    /* =====================================================================
+       MOBILE : page verte pleine hauteur, carrousel, appel à l'action
+       ===================================================================== */
+    @media (max-width: 992px) {
+      .page-container { flex-direction: column; }
+
+      .left-panel {
+        min-height: 100vh;
+        min-height: 100dvh;
+        justify-content: space-between;
+        padding: 24px 16px;
+        padding-top: calc(24px + env(safe-area-inset-top));
+        text-align: center;
+      }
+
+      .left-panel::before { top: -80px; right: -80px; width: 300px; height: 300px; }
+
+      .btn-login-nav { display: inline-block; }
+      .brand-header { font-size: 1.4rem; }
+      .brand-icon { width: 34px; height: 34px; }
+
+      .hero-content { margin: 24px auto; max-width: 640px; }
+      .hero-title { font-size: 1.6rem; }
+      .hero-description { font-size: 0.95rem; margin: 0 auto; }
+
+      .features-grid { display: none; }
+      .carousel-container { display: block; }
+      .cta-wrapper { display: flex; }
+
+      .stats-container { grid-template-columns: 1fr; max-width: 600px; margin: 0 auto; }
+
+      .right-panel { padding: 24px 16px; }
+      .auth-card { padding: 28px 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-container">
+
+    <!-- ================= COLONNE GAUCHE ================= -->
+    <div class="left-panel">
+
+      <header class="lp-header">
+        <a href="{{ url_for('assistant_chat') }}" class="brand-header">
+          <div class="brand-icon">
+            <img src="{{ url_for('static', filename='img/logo-icon.png') }}" alt="">
+          </div>
+          <span>PharmaX</span>
+        </a>
+        <a href="#authCard" class="btn-login-nav">Se connecter</a>
+      </header>
+
+      <main class="hero-content">
+        <h1 class="hero-title">Trouvez une pharmacie de garde, instantanément, à toute heure.</h1>
+        <p class="hero-description">
+          Recherche assistée par IA, 24h sur 24 : pharmacies ouvertes, numéros d'urgence
+          et horaires de garde près de chez vous.
+        </p>
+      </main>
+
+      <!-- Services : carrousel (mobile) -->
+      <div class="carousel-container">
+        <div class="carousel-track" id="carouselTrack">
+          <div class="carousel-slide">
+            <div class="slide-icon"><i class="fas fa-ambulance"></i></div>
+            <div class="slide-text">
+              <h4>Pharmacies de Garde 24/7</h4>
+              <p>Accès immédiat aux pharmacies ouvertes cette nuit, les week-ends et les jours fériés.</p>
+            </div>
+          </div>
+          <div class="carousel-slide">
+            <div class="slide-icon"><i class="fas fa-crosshairs"></i></div>
+            <div class="slide-text">
+              <h4>Proximité &amp; Géolocalisation</h4>
+              <p>Calculez automatiquement la pharmacie de garde la plus proche de votre position exacte.</p>
+            </div>
+          </div>
+          <div class="carousel-slide">
+            <div class="slide-icon"><i class="fas fa-route"></i></div>
+            <div class="slide-text">
+              <h4>Guidage en Temps Réel</h4>
+              <p>Suivez l'itinéraire interactif étape par étape jusqu'au comptoir de votre pharmacie.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="carousel-controls">
+          <div class="carousel-dots" id="carouselDots">
+            <button type="button" class="dot active" data-step="0" aria-label="Service 1"></button>
+            <button type="button" class="dot" data-step="1" aria-label="Service 2"></button>
+            <button type="button" class="dot" data-step="2" aria-label="Service 3"></button>
+          </div>
+          <div class="carousel-arrows">
+            <button type="button" class="arrow-btn" id="carouselPrev" aria-label="Précédent"><i class="fas fa-chevron-left"></i></button>
+            <button type="button" class="arrow-btn" id="carouselNext" aria-label="Suivant"><i class="fas fa-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Services : liste (ordinateur) -->
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-badge"><i class="fas fa-ambulance"></i></div>
+          <div class="feature-info">
+            <h4>Pharmacies de Garde 24/7</h4>
+            <p>Accès immédiat aux pharmacies ouvertes cette nuit, les week-ends et les jours fériés.</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-badge"><i class="fas fa-crosshairs"></i></div>
+          <div class="feature-info">
+            <h4>Proximité &amp; Géolocalisation</h4>
+            <p>Calculez automatiquement la pharmacie de garde la plus proche de votre position exacte.</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-badge"><i class="fas fa-route"></i></div>
+          <div class="feature-info">
+            <h4>Guidage en Temps Réel</h4>
+            <p>Suivez l'itinéraire interactif étape par étape jusqu'au comptoir de votre pharmacie.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-wrapper">
+        <a href="#authCard" class="btn-primary-cta">Accéder au service</a>
+      </div>
+
+      <div class="stats-container">
+        <div class="stat-card">
+          <h5>{{ stats.guard_today }} de garde</h5>
+          <p>pharmacies actives près de chez vous</p>
+        </div>
+        <div class="stat-card">
+          <h5>{{ stats.total }} pharmacies</h5>
+          <p>référencées et interrogeables par PharmaX</p>
+        </div>
+        <div class="stat-card">
+          <h5>Couverture 24/7</h5>
+          <p>accès garanti en cas d'urgence</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= COLONNE DROITE ================= -->
+    <div class="right-panel">
+      <div class="auth-card" id="authCard">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+          <div class="flash-stack">
+            {% for category, message in messages %}
+            <div class="flash-item {{ category }}"><i class="fas fa-circle-info"></i> {{ message }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="tab-switcher">
+          <button class="tab-btn {% if mode != 'register' %}active{% endif %}" id="tabLogin" type="button"
+                  onclick="switchAuthMode('login')">Se connecter</button>
+          <button class="tab-btn {% if mode == 'register' %}active{% endif %}" id="tabRegister" type="button"
+                  onclick="switchAuthMode('register')">Créer un compte</button>
+        </div>
+
+        <form id="authForm" method="POST"
+              action="{{ url_for('register') if mode == 'register' else url_for('login') }}">
+
+          <div class="form-group register-only">
+            <label for="fullNameInput">Nom complet</label>
+            <div class="input-wrapper">
+              <i class="fas fa-id-card input-icon-left"></i>
+              <input type="text" id="fullNameInput" name="full_name" class="input-field"
+                     placeholder="Ex. Kodjo Amegan" value="{{ form.full_name if form else '' }}">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="usernameInput">Nom d'utilisateur</label>
+            <div class="input-wrapper">
+              <i class="fas fa-user input-icon-left"></i>
+              <input type="text" id="usernameInput" name="username" class="input-field"
+                     placeholder="{{ 'ex. kodjo' if mode == 'register' else 'admin' }}"
+                     autocomplete="username" value="{{ form.username if form else '' }}" required>
+            </div>
+          </div>
+
+          <div class="form-group register-only">
+            <label for="emailInput">Adresse e-mail</label>
+            <div class="input-wrapper">
+              <i class="far fa-envelope input-icon-left"></i>
+              <input type="email" id="emailInput" name="email" class="input-field"
+                     placeholder="vous@email.com" value="{{ form.email if form else '' }}">
+            </div>
+          </div>
+
+          <div class="form-group register-only">
+            <label for="phoneInput">Téléphone</label>
+            <div class="input-wrapper">
+              <i class="fas fa-phone input-icon-left"></i>
+              <input type="tel" id="phoneInput" name="phone" class="input-field"
+                     placeholder="+228 90 00 00 00" value="{{ form.phone if form else '' }}">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-label-row">
+              <label for="passwordInput">Mot de passe</label>
+              <a href="{{ url_for('forgot_password') }}" class="forgot-link">Mot de passe oublié ?</a>
+            </div>
+            <div class="input-wrapper">
+              <i class="fas fa-lock input-icon-left"></i>
+              <input type="password" id="passwordInput" name="password" class="input-field"
+                     placeholder="Votre mot de passe" autocomplete="current-password" required>
+              <i class="far fa-eye input-icon-right" id="togglePassword"></i>
+            </div>
+          </div>
+
+          <div class="form-group register-only">
+            <label for="passwordConfirmInput">Confirmer le mot de passe</label>
+            <div class="input-wrapper">
+              <i class="fas fa-lock input-icon-left"></i>
+              <input type="password" id="passwordConfirmInput" name="password_confirm" class="input-field"
+                     placeholder="Répétez le mot de passe" autocomplete="new-password">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-submit" id="btnSubmit">
+            {% if mode == 'register' %}Créer mon compte{% else %}Se connecter{% endif %}
+          </button>
+
+          <div class="register-notice" id="registerNotice">
+            Un compte vous permet d'enregistrer vos pharmacies favorites et d'être alerté
+            dès qu'elles passent de garde.
+          </div>
+        </form>
+
+        <div class="divider"><span>ou</span></div>
+
+        <a href="{{ url_for('assistant_chat') }}" class="btn-guest">Continuer sans compte</a>
+        <p class="guest-note">Aucun compte requis — certaines fonctionnalités seront limitées</p>
+
+        <button type="button" class="btn-installer-flow" id="btnInstallerFlow" hidden>
+          <i class="fas fa-download"></i> Installer l'application
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+
+  {% include '_splash.html' %}
+  <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+
+  <script>
+    /* --- Carrousel des services (mobile) : flèches, puces, défilement auto --- */
+    (function () {
+      var track = document.getElementById('carouselTrack');
+      var dots = document.querySelectorAll('#carouselDots .dot');
+      if (!track || !dots.length) return;
+
+      var courant = 0;
+      var total = dots.length;
+      var minuteur = null;
+
+      function afficher(index) {
+        courant = (index + total) % total;
+        track.style.transform = 'translateX(-' + (courant * 100) + '%)';
+        dots.forEach(function (d, i) { d.classList.toggle('active', i === courant); });
+      }
+
+      function relancer() {
+        clearInterval(minuteur);
+        minuteur = setInterval(function () { afficher(courant + 1); }, 4000);
+      }
+
+      dots.forEach(function (d) {
+        d.onclick = function () { afficher(Number(d.dataset.step)); relancer(); };
+      });
+      document.getElementById('carouselNext').onclick = function () { afficher(courant + 1); relancer(); };
+      document.getElementById('carouselPrev').onclick = function () { afficher(courant - 1); relancer(); };
+
+      /* Balayage au doigt */
+      var departX = null;
+      track.addEventListener('touchstart', function (e) { departX = e.touches[0].clientX; }, { passive: true });
+      track.addEventListener('touchend', function (e) {
+        if (departX === null) return;
+        var delta = e.changedTouches[0].clientX - departX;
+        if (Math.abs(delta) > 40) { afficher(courant + (delta < 0 ? 1 : -1)); relancer(); }
+        departX = null;
+      }, { passive: true });
+
+      relancer();
+    })();
+
+    /* --- Affichage du mot de passe --- */
+    (function () {
+      var icone = document.getElementById('togglePassword');
+      var champ = document.getElementById('passwordInput');
+      if (!icone || !champ) return;
+      icone.onclick = function () {
+        var masque = champ.type === 'password';
+        champ.type = masque ? 'text' : 'password';
+        icone.className = (masque ? 'far fa-eye-slash' : 'far fa-eye') + ' input-icon-right';
+      };
+    })();
+
+    /* --- Bascule connexion / inscription --- */
+    var authMode = '{{ 'register' if mode == 'register' else 'login' }}';
+
+    function switchAuthMode(mode) {
+      var tabLogin = document.getElementById('tabLogin');
+      var tabRegister = document.getElementById('tabRegister');
+      var btnSubmit = document.getElementById('btnSubmit');
+      var notice = document.getElementById('registerNotice');
+      var form = document.getElementById('authForm');
+
+      authMode = mode;
+      ['emailInput', 'phoneInput', 'passwordConfirmInput'].forEach(function (id) {
+        var champ = document.getElementById(id);
+        if (champ) champ.required = (mode === 'register');
+      });
+
+      if (mode === 'register') {
+        tabLogin.classList.remove('active');
+        tabRegister.classList.add('active');
+        btnSubmit.innerText = 'Créer mon compte';
+        document.body.classList.add('register-mode');
+        form.action = "{{ url_for('register') }}";
+        notice.classList.add('show');
+      } else {
+        tabRegister.classList.remove('active');
+        tabLogin.classList.add('active');
+        btnSubmit.innerText = 'Se connecter';
+        document.body.classList.remove('register-mode');
+        form.action = "{{ url_for('login') }}";
+        notice.classList.remove('show');
+      }
+    }
+
+    if (authMode === 'register') switchAuthMode('register');
+  </script>
+</body>
+</html>

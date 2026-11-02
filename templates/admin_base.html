@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>{% block title %}Console d'administration - PharmaX{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% include '_head_pwa.html' %}
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="admin-body">
+{% set ep = request.endpoint %}
+<div class="admin-shell">
+
+  <!-- Barre latérale -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <a class="admin-brand" href="{{ url_for('dashboard') }}">
+      <span class="brand-mark">
+        <img src="{{ url_for('static', filename='img/logo-icon.png') }}" alt="PharmaX">
+      </span>
+      <span>
+        <strong>PharmaX</strong>
+        <small>Console d'administration</small>
+      </span>
+    </a>
+
+    <nav class="admin-nav">
+      <a href="{{ url_for('dashboard') }}" class="{% if ep == 'dashboard' %}active{% endif %}">
+        <i class="ri-home-5-line"></i> Tableau de bord
+      </a>
+      <a href="{{ url_for('admin_pharmacies') }}" class="{% if ep in ['admin_pharmacies', 'add_pharmacy', 'edit_pharmacy'] %}active{% endif %}">
+        <i class="ri-building-line"></i> Pharmacies
+      </a>
+      <a href="{{ url_for('admin_scraped') }}" class="{% if ep == 'admin_scraped' %}active{% endif %}">
+        <i class="ri-refresh-line"></i> Données scrapées
+        {% if pending_scraped %}<span class="nav-badge">{{ pending_scraped }}</span>{% endif %}
+      </a>
+      <a href="{{ url_for('manage_guards') }}" class="{% if ep == 'manage_guards' %}active{% endif %}">
+        <i class="ri-calendar-check-line"></i> Gardes
+      </a>
+      <a href="{{ url_for('admin_users') }}" class="{% if ep == 'admin_users' %}active{% endif %}">
+        <i class="ri-user-line"></i> Profils usagers
+      </a>
+      <a href="{{ url_for('admin_analytics') }}" class="{% if ep == 'admin_analytics' %}active{% endif %}">
+        <i class="ri-bar-chart-line"></i> Analytique
+      </a>
+
+      <div class="nav-separator"></div>
+
+      <a href="{{ url_for('assistant_chat') }}"><i class="ri-arrow-left-line"></i> Retour à l'application</a>
+      <a href="{{ url_for('logout') }}" class="nav-danger"><i class="ri-logout-box-r-line"></i> Se déconnecter</a>
+    </nav>
+
+    <div class="admin-user">
+      <span class="user-avatar">{{ (session.get('username') or 'AD')[:2] | upper }}</span>
+      <span>
+        <strong>{{ session.get('username', 'admin') }}</strong>
+        <span class="admin-role-badge">{{ 'Admin' if user_is_admin else 'Utilisateur' }}</span>
+      </span>
+    </div>
+  </aside>
+
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <!-- Espace de travail -->
+  <main class="admin-main">
+    <header class="admin-header">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Ouvrir le menu"><i class="ri-menu-line"></i></button>
+        <div>
+          <h1>{% block page_title %}Console d'administration{% endblock %}</h1>
+          <p class="header-date">{{ today_long }}</p>
+        </div>
+      </div>
+      <div>{% block page_actions %}{% endblock %}</div>
+    </header>
+
+    <div class="admin-content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="adm-flash {{ category }}"><i class="ri-information-line"></i> {{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+</div>
+
+<script>
+  (function () {
+    var body = document.body;
+    var toggle = document.getElementById('sidebarToggle');
+    var backdrop = document.getElementById('sidebarBackdrop');
+    if (toggle) toggle.onclick = function () { body.classList.toggle('sidebar-open'); };
+    if (backdrop) backdrop.onclick = function () { body.classList.remove('sidebar-open'); };
+  })();
+</script>
+{% block extra_scripts %}{% endblock %}
+{% include '_splash.html' %}
+<script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+</body>
+</html>

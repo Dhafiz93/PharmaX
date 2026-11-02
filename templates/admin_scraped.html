@@ -1,0 +1,180 @@
+{% extends 'admin_base.html' %}
+{% block title %}Données scrapées à valider - PharmaX{% endblock %}
+{% block page_title %}Données scrapées à valider{% endblock %}
+
+{% block content %}
+
+<div class="adm-card">
+  <h2 class="adm-card-title">Collecte automatique (INAM)</h2>
+  <p class="adm-card-subtitle">
+    La collecte récupère la liste officielle des pharmacies de garde publiée par l'INAM. Chaque entrée est
+    rapprochée du référentiel local. Les correspondances exactes sont publiées automatiquement ;
+    les correspondances approximatives et les pharmacies inconnues sont listées ci-dessous pour validation.
+  </p>
+  <div class="adm-form-row">
+    <form method="post" action="{{ url_for('run_scraping') }}">
+      <button class="adm-btn" type="submit"><i class="ri-refresh-line"></i> Lancer une collecte</button>
+    </form>
+    {% if auto_enabled %}
+    <span class="adm-pill green"><i class="ri-time-line"></i> Collecte automatique toutes les {{ auto_interval }} h</span>
+    {% if coverage_gap %}
+    <span class="adm-pill amber"><i class="ri-alarm-warning-line"></i>
+      Aucune garde publiée pour aujourd'hui ou demain — collecte resserrée à {{ auto_urgent }} h</span>
+    {% endif %}
+    {% endif %}
+    {% if auto_validate %}
+    <span class="adm-pill blue"><i class="ri-checkbox-circle-line"></i> Correspondances exactes publiées sans validation</span>
+    {% else %}
+    <span class="adm-pill grey"><i class="ri-pause-line"></i> Collecte automatique désactivée</span>
+    {% endif %}
+    {% if last_run %}
+    <span class="adm-card-subtitle" style="margin:0;">Dernière collecte réussie : {{ last_run }}</span>
+    {% endif %}
+  </div>
+
+  {% if runs %}
+  <div class="adm-table-wrap" style="margin-top:16px;">
+    <table class="adm-table">
+      <thead><tr><th>Lancement</th><th>Mode</th><th>Résultat</th><th>Détail</th></tr></thead>
+      <tbody>
+        {% for run in runs %}
+        <tr>
+          <td class="muted">{{ run.finished_at or run.started_at }}</td>
+          <td>{% if run.mode == 'automatique' %}<span class="adm-pill blue">Automatique</span>{% else %}<span class="adm-pill grey">Manuel</span>{% endif %}</td>
+          <td>{% if run.status == 'success' %}<span class="adm-pill green">{{ run.added }} entrée(s)</span>{% else %}<span class="adm-pill red">Échec</span>{% endif %}</td>
+          <td class="muted">{{ run.message or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<form method="post" action="{{ url_for('bulk_scraped') }}" id="bulkForm">
+
+  <div class="select-all-bar">
+    <input type="checkbox" id="selectAll">
+    <strong>Tout sélectionner</strong>
+    <span class="count">{{ entries|length }} en attente</span>
+    <span class="bar-actions">
+      <button class="adm-btn small" name="action" value="validate" type="submit"
+              onclick="return confirmBulk('valider');"><i class="ri-check-line"></i> Valider la sélection</button>
+      <button class="adm-btn small danger" name="action" value="reject" type="submit"
+              onclick="return confirmBulk('rejeter');"><i class="ri-close-line"></i> Rejeter la sélection</button>
+    </span>
+  </div>
+
+  {% for item in entries %}
+  <div class="scraped-item" style="margin-top: 16px;">
+    <input type="checkbox" name="entry_ids" value="{{ item.id }}" class="entry-check">
+
+    <div class="scraped-body">
+      <div class="scraped-head">
+        <strong>{{ item.raw_name }}</strong>
+        {% if item.match_score >= 100 %}
+          <span class="adm-pill green">Correspondance certaine</span>
+        {% elif item.matched_pharmacy_id %}
+          <span class="adm-pill amber">Correspondance à vérifier (score {{ item.match_score }})</span>
+        {% else %}
+          <span class="adm-pill red">Aucune correspondance</span>
+        {% endif %}
+      </div>
+
+      <div class="line">{{ item.phone or 'Téléphone non communiqué' }}</div>
+      <div class="line address">{{ item.address or 'Adresse non communiquée' }}</div>
+      <div class="line"><b>Période :</b> {{ item.period_display }} · {{ item.day_count }} jour(s)</div>
+
+      {% if item.matched_pharmacy_id %}
+      <div class="line"><b>Rapprochée avec :</b> {{ item.matched_name }}{% if item.matched_quartier %} · {{ item.matched_quartier }}{% endif %}</div>
+      {% else %}
+      <div class="scraped-manual">
+        <label for="manual{{ item.id }}">À associer manuellement :</label>
+        <select class="adm-select" id="manual{{ item.id }}" name="manual_{{ item.id }}" form="validateForm{{ item.id }}">
+          <option value="">Choisir une pharmacie...</option>
+          {% for p in pharmacies %}
+          <option value="{{ p.id }}">{{ p.name }}{% if p.quartier %} — {{ p.quartier }}{% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="scraped-actions">
+      <button class="adm-btn small" type="submit" form="validateForm{{ item.id }}"><i class="ri-checkbox-circle-line"></i> Valider</button>
+      <button class="adm-btn small danger" type="submit" form="rejectForm{{ item.id }}"
+              onclick="return confirm('Rejeter cette entrée ?');"><i class="ri-close-line"></i> Rejeter</button>
+    </div>
+  </div>
+  {% else %}
+  <div class="adm-card" style="margin-top:16px;">
+    <div class="adm-empty">
+      <i class="ri-inbox-line"></i>
+      Aucune entrée en attente de validation. Lancez une collecte pour récupérer la liste de garde publiée.
+    </div>
+  </div>
+  {% endfor %}
+
+</form>
+
+{# Formulaires individuels, hors du formulaire groupé pour éviter l'imbrication #}
+{% for item in entries %}
+<form id="validateForm{{ item.id }}" method="post" action="{{ url_for('validate_scraped', entry_id=item.id) }}"></form>
+<form id="rejectForm{{ item.id }}" method="post" action="{{ url_for('reject_scraped', entry_id=item.id) }}"></form>
+{% endfor %}
+
+{% if history %}
+<div class="adm-card">
+  <h2 class="adm-card-title">Entrées déjà traitées</h2>
+  <p class="adm-card-subtitle">Les 20 dernières décisions.</p>
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead><tr><th>Pharmacie (source)</th><th>Période</th><th>Décision</th><th>Par</th><th>Traitée le</th></tr></thead>
+      <tbody>
+        {% for h in history %}
+        <tr>
+          <td class="strong">{{ h.raw_name }}</td>
+          <td class="muted">{{ h.period_display }}</td>
+          <td>
+            {% if h.status == 'validated' %}<span class="adm-pill green">Validée</span>
+            {% else %}<span class="adm-pill red">Rejetée</span>{% endif %}
+          </td>
+          <td>
+            {% if h.decided_by and h.decided_by.startswith('collecte') %}
+            <span class="adm-pill blue">Automatique</span>
+            {% else %}
+            <span class="muted">{{ h.decided_by or '—' }}</span>
+            {% endif %}
+          </td>
+          <td class="muted">{{ h.decided_at or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  var selectAll = document.getElementById('selectAll');
+  var checks = document.querySelectorAll('.entry-check');
+
+  if (selectAll) {
+    selectAll.onchange = function () {
+      checks.forEach(function (c) { c.checked = selectAll.checked; });
+    };
+  }
+
+  function confirmBulk(verb) {
+    var n = document.querySelectorAll('.entry-check:checked').length;
+    if (!n) {
+      alert('Sélectionnez au moins une entrée.');
+      return false;
+    }
+    return confirm(verb.charAt(0).toUpperCase() + verb.slice(1) + ' ' + n + ' entrée(s) ?');
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Pharmacies - PharmaGeo Lomé{% endblock %}
+{% block content %}
+<section class="container section-space">
+    <div class="section-header">
+        <h1 class="page-title">Répertoire des pharmacies</h1>
+        <p class="page-subtitle">Recherchez une pharmacie par nom, quartier, adresse ou statut de garde.</p>
+    </div>
+    <div class="section-card mb-4">
+        <form class="row g-3 align-items-end" method="get">
+            <div class="col-md-8">
+                <label class="form-label">Recherche</label>
+                <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Nom, quartier, adresse...">
+            </div>
+            <div class="col-md-2">
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" name="guard_only" value="1" id="guard_only" {% if guard_only %}checked{% endif %}>
+                    <label class="form-check-label" for="guard_only">Garde uniquement</label>
+                </div>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button class="btn btn-primary">Filtrer</button>
+            </div>
+        </form>
+    </div>
+    <div class="row g-4">
+        {% for item in pharmacies %}
+        <div class="col-md-6 col-xl-4">
+            <div class="pharmacy-card h-100">
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                        <h3>{{ item.name }}</h3>
+                        <p class="text-muted mb-2">{{ item.quartier or 'Agoè-Nyivé 1' }}</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if item.is_on_guard %}<span class="badge rounded-pill text-bg-success">De garde</span>{% endif %}
+                        {% if user_logged_in %}
+                        <form method="post" action="{{ url_for('toggle_favorite', pharmacy_id=item.id) }}">
+                            <button class="btn btn-sm btn-link p-0 fs-5 text-decoration-none"
+                                    title="{% if item.id in favorites %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}"
+                                    style="color: {% if item.id in favorites %}#e11d48{% else %}#cbd5e1{% endif %};">
+                                <i class="ri-heart-{% if item.id in favorites %}fill{% else %}line{% endif %}"></i>
+                            </button>
+                        </form>
+                        {% else %}
+                        <a href="{{ url_for('register') }}" class="fs-5 text-decoration-none" style="color:#cbd5e1;"
+                           title="Créez un compte pour ajouter cette pharmacie à vos favoris"><i class="ri-heart-line"></i></a>
+                        {% endif %}
+                    </div>
+                </div>
+                <ul class="meta-list">
+                    <li><strong>Adresse :</strong> {{ item.address or 'À compléter' }}</li>
+                    <li><strong>Téléphone :</strong> {{ item.phone or 'À compléter' }}</li>
+                    <li><strong>Horaires :</strong> {{ item.opening_hours or 'À compléter' }}</li>
+                </ul>
+                <div class="d-flex gap-2 mt-auto">
+                    <a href="{{ url_for('pharmacy_detail', pharmacy_id=item.id) }}" class="btn btn-outline-primary btn-sm">Détails</a>
+                    <a href="{{ url_for('nearest_page') }}?focus={{ item.id }}" class="btn btn-primary btn-sm">Me guider</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12"><div class="section-card"><p class="mb-0 text-muted">Aucune pharmacie trouvée.</p></div></div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

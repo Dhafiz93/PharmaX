@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Mes pharmacies favorites - PharmaX{% endblock %}
+{% block content %}
+<section class="container section-space">
+
+  <div class="section-header mb-4">
+    <h1 class="page-title">Mes pharmacies favorites</h1>
+    <p class="page-subtitle">
+      Vous recevez une alerte dès qu'une de ces pharmacies est programmée de garde.
+    </p>
+  </div>
+
+  {% if upcoming %}
+  <div class="section-card mb-4">
+    <h2 class="section-title h5 mb-3"><i class="ri-calendar-check-line text-success"></i> Prochaines gardes de vos favoris</h2>
+    <div class="d-flex flex-wrap gap-2">
+      {% for u in upcoming %}
+      <span class="badge rounded-pill text-bg-light border px-3 py-2 fw-normal">
+        <strong>{{ u.name }}</strong> — {{ u.guard_date }}
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="row g-4">
+    {% for item in favorites %}
+    <div class="col-md-6 col-xl-4">
+      <div class="pharmacy-card h-100">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+          <div>
+            <h3>{{ item.name }}</h3>
+            <p class="text-muted mb-2">{{ item.quartier or 'Agoè-Nyivé 1' }}</p>
+          </div>
+          {% if item.is_on_guard %}<span class="badge rounded-pill text-bg-success">De garde aujourd'hui</span>{% endif %}
+        </div>
+        <ul class="meta-list">
+          <li><strong>Adresse :</strong> {{ item.address or 'À compléter' }}</li>
+          <li><strong>Téléphone :</strong> {{ item.phone or 'À compléter' }}</li>
+        </ul>
+        <div class="d-flex gap-2 mt-auto">
+          <a href="{{ url_for('pharmacy_detail', pharmacy_id=item.id) }}" class="btn btn-outline-primary btn-sm">Détails</a>
+          <form method="post" action="{{ url_for('toggle_favorite', pharmacy_id=item.id) }}">
+            <button class="btn btn-outline-danger btn-sm"><i class="ri-heart-fill"></i> Retirer</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <div class="section-card text-center py-5">
+        <i class="ri-heart-line d-block fs-1 mb-3 text-secondary"></i>
+        <p class="text-muted mb-3">Vous n'avez pas encore de pharmacie favorite.</p>
+        <a href="{{ url_for('pharmacies') }}" class="btn btn-primary">Parcourir l'annuaire</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</section>
+{% endblock %}

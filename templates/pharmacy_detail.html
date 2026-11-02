@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}{{ pharmacy.name }} - PharmaGeo Lomé{% endblock %}
+{% block content %}
+<section class="container section-space">
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="section-card h-100">
+                <span class="eyebrow text-primary">Fiche pharmacie</span>
+                <h1 class="page-title mt-2">{{ pharmacy.name }}</h1>
+                <ul class="meta-list detail-list mt-4">
+                    <li><strong>Quartier :</strong> {{ pharmacy.quartier or 'Agoè-Nyivé 1' }}</li>
+                    <li><strong>Adresse :</strong> {{ pharmacy.address or 'À compléter' }}</li>
+                    <li><strong>Téléphone :</strong> {{ pharmacy.phone or 'À compléter' }}</li>
+                    <li><strong>Email :</strong> {{ pharmacy.email or 'À compléter' }}</li>
+                    <li><strong>Horaires :</strong> {{ pharmacy.opening_hours or 'À compléter' }}</li>
+                    <li><strong>Latitude :</strong> {{ '%.6f'|format(pharmacy.latitude) }}</li>
+                    <li><strong>Longitude :</strong> {{ '%.6f'|format(pharmacy.longitude) }}</li>
+                    <li><strong>Source :</strong> {{ pharmacy.provider or 'gps' }} | précision {{ pharmacy.accuracy or 'N/D' }} m</li>
+                </ul>
+                <a href="{{ url_for('navigation_page') }}?focus={{ pharmacy.id }}" class="btn btn-primary mt-3">Calculer un itinéraire</a>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="section-card h-100">
+                <h3 class="section-title">Localisation</h3>
+                <div id="detailMap" class="map-frame"></div>
+                <div class="mt-4">
+                    <h4 class="h6 text-uppercase text-muted mb-3">Historique récent des gardes</h4>
+                    {% if guard_dates %}
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead><tr><th>Date</th><th>Note</th></tr></thead>
+                            <tbody>
+                            {% for g in guard_dates %}
+                            <tr><td>{{ g.guard_date }}</td><td>{{ g.notes or '-' }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">Aucune garde encore enregistrée pour cette pharmacie.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+window.PHARMACIES_DATA = [{{ pharmacy|tojson }}];
+window.MAP_TARGET = 'detailMap';
+window.MAP_MODE = 'single';
+</script>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'admin_base.html' %}
+{% block title %}Tableau de bord - PharmaX{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('admin_scraped') }}" class="adm-btn ghost"><i class="ri-refresh-line"></i> Données scrapées</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="adm-stat-grid">
+  <div class="adm-stat">
+    <div class="stat-icon"><i class="ri-building-line"></i></div>
+    <h3>{{ counts.total }}</h3>
+    <p>Pharmacies enregistrées</p>
+  </div>
+  <div class="adm-stat">
+    <div class="stat-icon blue"><i class="ri-calendar-check-line"></i></div>
+    <h3>{{ counts.guard_today }}</h3>
+    <p>De garde aujourd'hui</p>
+  </div>
+  <div class="adm-stat">
+    <div class="stat-icon amber"><i class="ri-inbox-line"></i></div>
+    <h3>{{ counts.pending }}</h3>
+    <p>Entrées scrapées en attente</p>
+  </div>
+  <div class="adm-stat">
+    <div class="stat-icon rose"><i class="ri-map-pin-line"></i></div>
+    <h3>{{ counts.no_gps }}</h3>
+    <p>Sans coordonnées GPS</p>
+  </div>
+</div>
+
+<div class="adm-card">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+    <div>
+      <h2 class="adm-card-title">De garde aujourd'hui</h2>
+      <p class="adm-card-subtitle" style="margin:0;">Liste publiée dans l'application pour la date du jour.</p>
+    </div>
+    <a href="{{ url_for('manage_guards') }}" class="adm-btn ghost small">Gérer les gardes</a>
+  </div>
+
+  <div class="adm-table-wrap" style="margin-top:14px;">
+    <table class="adm-table">
+      <thead><tr><th>Pharmacie</th><th>Quartier</th><th>Téléphone</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for item in guard_today %}
+        <tr>
+          <td class="strong">{{ item.name }}</td>
+          <td class="muted">{{ item.quartier or '—' }}</td>
+          <td class="muted">{{ item.phone or '—' }}</td>
+          <td><a class="adm-icon-btn" href="{{ url_for('edit_pharmacy', pharmacy_id=item.id) }}" title="Modifier"><i class="ri-pencil-line"></i></a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4">
+          <div class="adm-empty"><i class="ri-calendar-line"></i>Aucune pharmacie de garde enregistrée pour aujourd'hui.</div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="adm-card">
+  <h2 class="adm-card-title">Prochaines gardes</h2>
+  <p class="adm-card-subtitle">Les 15 prochaines affectations enregistrées.</p>
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead><tr><th>Date</th><th>Pharmacie</th><th>Note</th></tr></thead>
+      <tbody>
+        {% for item in upcoming %}
+        <tr>
+          <td class="strong">{{ item.guard_date }}</td>
+          <td>{{ item.name }}</td>
+          <td class="muted">{{ item.notes or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3"><div class="adm-empty"><i class="ri-time-line"></i>Aucune garde planifiée.</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

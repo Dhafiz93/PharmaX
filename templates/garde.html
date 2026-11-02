@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#00a86b">
+<title>Pharmacies de garde — PharmaX</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/topbar.css') }}">
+{% include '_head_pwa.html' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app-ui.css') }}">
+</head>
+<body class="ui-body">
+
+{% include '_topbar.html' %}
+
+<main class="ui-main">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="ui-flash-stack">
+      {% for category, message in messages %}
+      <div class="ui-flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="directory-search">
+    <form method="get" class="search-field">
+      <i class="ri-search-line"></i>
+      <input type="search" name="q" value="{{ q }}" placeholder="Rechercher une pharmacie, un quartier...">
+      <input type="hidden" name="date" value="{{ target_date }}">
+    </form>
+
+    <div class="directory-filters">
+      <span class="filter-chip active"><i class="ri-shield-check-line"></i> De garde</span>
+      <span class="result-count">{{ guard_rows|length }} résultat(s)</span>
+
+      <form method="get" class="date-picker">
+        <label for="guardDate">Date</label>
+        <select id="guardDate" name="date" onchange="this.form.submit()">
+          {% for d in dates %}
+          <option value="{{ d }}" {% if d == target_date %}selected{% endif %}>
+            {{ d }}{% if d == today %} — aujourd'hui{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+        {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+      </form>
+    </div>
+  </div>
+
+  <div class="pharmacy-list">
+    {% for item in guard_rows %}
+    <article class="pharmacy-item">
+      <div class="pharmacy-top">
+        <span class="pharmacy-mark"><i class="ri-add-line"></i></span>
+        <div class="pharmacy-info">
+          <strong>{{ item.name }}</strong>
+          <div class="address">{{ item.address or item.quartier or 'Adresse à compléter' }}</div>
+          {% if item.phone %}<div class="phone">{{ item.phone }}</div>{% endif %}
+        </div>
+        <span class="ui-badge on-duty">{% if item.guard_date == today %}Ouvert · De garde{% else %}De garde{% endif %}</span>
+      </div>
+
+      <div class="duty-band">
+        <i class="ri-calendar-line"></i>
+        <span>
+          <b>Garde :</b>
+          {% if item.duty_start and item.duty_start != item.duty_end %}
+            {{ item.duty_start }} au {{ item.duty_end }}
+          {% else %}
+            le {{ item.guard_date }}
+          {% endif %}
+        </span>
+      </div>
+
+      {% if item.notes %}<div class="pharmacy-note"><i class="ri-information-line"></i> {{ item.notes }}</div>{% endif %}
+
+      <div class="pharmacy-actions">
+        <a class="ui-btn call" href="{{ url_for('pharmacy_detail', pharmacy_id=item.id) }}">
+          <i class="ri-eye-line"></i> Voir
+        </a>
+        <a class="ui-btn route" href="{{ url_for('navigation_page', focus=item.id) }}">
+          <i class="ri-navigation-line"></i> Y aller
+        </a>
+        {% if user_logged_in %}
+        <button class="fav-toggle {% if item.id in favorites %}is-fav{% endif %}"
+                type="button" data-id="{{ item.id }}" aria-label="Ajouter aux favoris">
+          <i class="ri-heart-{% if item.id in favorites %}fill{% else %}line{% endif %}"></i>
+        </button>
+        {% endif %}
+      </div>
+    </article>
+    {% else %}
+    <div class="ui-empty">
+      <div class="circle"><i class="ri-calendar-line"></i></div>
+      <p>Aucune pharmacie de garde enregistrée pour cette date.</p>
+      <a href="{{ url_for('garde') }}" class="ui-btn-outline">Revenir à aujourd'hui</a>
+    </div>
+    {% endfor %}
+  </div>
+
+</main>
+
+<script>
+  document.querySelectorAll('.fav-toggle').forEach(function (btn) {
+    btn.onclick = function () {
+      var icon = btn.querySelector('i');
+      btn.disabled = true;
+      fetch('{{ url_for("toggle_favorite", pharmacy_id=0) }}'.replace('/0', '/' + btn.dataset.id), {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'fetch' }
+      })
+      .then(function (r) { return r.status === 401 ? null : r.json(); })
+      .then(function (data) {
+        if (!data) return;
+        btn.classList.toggle('is-fav', data.active);
+        icon.className = data.active ? 'ri-heart-fill' : 'ri-heart-line';
+      })
+      .catch(function () {})
+      .finally(function () { btn.disabled = false; });
+    };
+  });
+</script>
+{% include '_splash.html' %}
+<script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+</body>
+</html>

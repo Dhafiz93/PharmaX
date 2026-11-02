@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#00a86b">
+<title>Assistant PharmaX — Pharmacies de garde à Lomé</title>
+<meta name="description" content="Agent conversationnel pour identifier et localiser en temps réel les pharmacies de garde les plus proches à Lomé.">
+
+<!-- Remixicon (pour les icônes) -->
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/topbar.css') }}">
+{% include '_head_pwa.html' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+</head>
+<body>
+
+  {% include '_topbar.html' %}
+
+  <!-- Main Container -->
+  <div class="main-container">
+
+    <!-- Tab 1: Assistant Chat -->
+    <div id="tab-assistant" class="tab-content active">
+      <section class="chat-section">
+
+        <div class="chat-header">
+          <div class="chat-user-info">
+            <div class="avatar"><i class="ri-add-line"></i></div>
+            <div>
+              <h4 style="font-size: 15px;">Assistant PharmaX</h4>
+              <span style="font-size: 12px; color: var(--primary-color);">En ligne - De garde 24h/24</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge-guest">• {% if user_logged_in %}Admin{% else %}Guest{% endif %}</span>
+            <button class="header-icon-btn" id="mapToggle" type="button" title="Ouvrir le guidage"><i class="ri-road-map-line"></i></button>
+            <button class="header-icon-btn" id="newChatBtn" type="button" title="Nouvelle conversation"><i class="ri-chat-new-line"></i></button>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+          <div class="message bot" id="welcomeBlock">
+            Bonjour ! Je suis l'Assistant PharmaX, votre assistant pour les pharmacies de garde. Je peux vous aider à trouver une pharmacie ouverte, consulter les horaires de garde ou obtenir les numéros d'urgence près de chez vous.
+            <div class="welcome-starters">
+              <button data-prompt="Trouve la pharmacie de garde la plus proche de moi" type="button">La plus proche</button>
+              <button data-prompt="Quelles pharmacies sont de garde aujourd'hui ?" type="button">Gardes du jour</button>
+              <button data-prompt="Aide-moi à choisir une pharmacie de garde" type="button">Aide au choix</button>
+            </div>
+            <div class="timestamp">{{ stats.total }} pharmacies référencées</div>
+          </div>
+        </div>
+
+        <!-- Contexte pharmacie sélectionnée -->
+        <div class="context-chip hidden" id="contextChip">
+          <span>Pharmacie sélectionnée :</span><strong id="contextName"></strong>
+          <button id="clearContext" type="button">×</button>
+        </div>
+
+        <!-- Indicateur de saisie -->
+        <div class="ai-typing hidden" id="typingIndicator">
+          <div class="ai-message-inner">
+            <div class="ai-assistant-avatar">✚</div>
+            <div class="ai-typing-dots"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+
+
+        <!-- Input Field -->
+        <form class="chat-input-area" id="chatForm">
+          <button type="button" id="locationBtn" class="input-icon-btn" title="Partager ma position"><i class="ri-focus-3-line"></i></button>
+          <textarea id="messageInput" rows="1" placeholder="Votre message..."></textarea>
+          <button class="btn-send" type="submit"><i class="ri-send-plane-fill"></i></button>
+        </form>
+        <p class="composer-note" id="locationStatus">Activez votre position pour obtenir la pharmacie de garde réellement la plus proche.</p>
+
+      </section>
+    </div>
+
+    <!-- Guidage / Navigation (modale) -->
+    <div class="route-modal" id="routeModal" aria-hidden="true">
+      <div class="route-modal-backdrop" id="routeBackdrop"></div>
+      <section class="route-navigation" id="routeDock" role="dialog" aria-modal="true" aria-label="Guidage vers la pharmacie">
+        <div id="routeMap" class="ai-route-map"></div>
+
+        <header class="route-nav-header">
+          <button class="route-back-button" id="closeMap" aria-label="Revenir à la conversation">
+            <i class="ri-arrow-left-line"></i><span>Conversation</span>
+          </button>
+          <div class="route-nav-title">
+            <small>GUIDAGE VERS LA PHARMACIE DE GARDE</small>
+            <h2 id="routeTitle">Aucun trajet sélectionné</h2>
+          </div>
+          <button class="route-round-button" id="recenterRoute" aria-label="Recentrer sur ma position">⌖</button>
+        </header>
+
+        <div class="route-empty" id="routeEmpty">
+          <div class="route-empty-icon">⌖</div>
+          <h3>Préparation du guidage</h3>
+          <p>Autorisez votre position pour afficher le trajet.</p>
+        </div>
+
+        <div class="route-status-pill" id="routeGpsStatus"><span></span> Recherche de votre position…</div>
+
+        <div class="route-bottom-sheet hidden" id="routeLiveCard">
+          <div class="route-destination-line">
+            <div class="route-pharmacy-icon">✚</div>
+            <div><small>DESTINATION</small><strong id="routeDestinationName">Pharmacie de garde</strong></div>
+          </div>
+          <div class="route-live-grid">
+            <div class="route-live-stat"><small>Distance</small><strong id="routeDistance">—</strong></div>
+            <div class="route-live-stat"><small>Durée</small><strong id="routeDuration">—</strong></div>
+            <div class="route-live-stat"><small>Précision GPS</small><strong id="routeAccuracy">—</strong></div>
+          </div>
+          <div class="route-instruction" id="routeInstruction">
+            <span class="nav-arrow">➜</span>
+            <div><small>Navigation active</small><strong id="routeInstructionText">Suivez le tracé jusqu'à la pharmacie</strong></div>
+          </div>
+          <div class="ai-route-actions" id="routeActions">
+            <button id="followRoute" class="active" type="button">Suivre ma position</button>
+            <a id="externalRoute" target="_blank" rel="noopener">Ouvrir dans Google Maps</a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+  <!-- Éléments techniques conservés pour le script (aucun panneau latéral dans ce design) -->
+  <button id="openSidebar" type="button" hidden aria-hidden="true"></button>
+  <button id="closeSidebar" type="button" hidden aria-hidden="true"></button>
+  <div id="sidebarOverlay" hidden aria-hidden="true"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script>
+  /* La carte de guidage est une surcouche, pas une page : sans cela, le bouton
+     « Retour » du navigateur quitte l'assistant et la conversation est perdue.
+     On empile donc une entrée d'historique à l'ouverture, que le retour consomme. */
+  (function () {
+    var modale = document.getElementById('routeModal');
+    var fermer = document.getElementById('closeMap');
+    if (!modale || !fermer) return;
+
+    var empilee = false;
+
+    new MutationObserver(function () {
+      var ouverte = modale.classList.contains('open');
+      if (ouverte && !empilee) {
+        history.pushState({ pharmaxRoute: true }, '');
+        empilee = true;
+      } else if (!ouverte && empilee) {
+        empilee = false;
+        // Retirer l'entrée ajoutée si la fermeture vient d'un clic
+        if (history.state && history.state.pharmaxRoute) history.back();
+      }
+    }).observe(modale, { attributes: true, attributeFilter: ['class'] });
+
+    window.addEventListener('popstate', function () {
+      if (modale.classList.contains('open')) {
+        empilee = false;         // l'entrée vient d'être consommée par le retour
+        fermer.click();
+      }
+    });
+  })();
+</script>
+{% include '_splash.html' %}
+<script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+</body>
+</html>

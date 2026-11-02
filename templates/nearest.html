@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Pharmacie la plus proche - PharmaGeo Lomé{% endblock %}
+{% block content %}
+<section class="container section-space">
+    <div class="section-header">
+        <h1 class="page-title">Trouver la pharmacie la plus proche</h1>
+        <p class="page-subtitle">Autorisez votre géolocalisation pour afficher la pharmacie la plus proche et l’itinéraire le plus court jusqu’à elle.</p>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="section-card h-100">
+                <div class="mb-3">
+                    <label class="form-label">Option de recherche</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="guardOnlyToggle">
+                        <label class="form-check-label" for="guardOnlyToggle">Limiter aux pharmacies de garde</label>
+                    </div>
+                </div>
+                <button id="locateBtn" class="btn btn-primary w-100">Détecter ma position</button>
+                <div id="nearestResult" class="result-panel mt-4">
+                    <p class="text-muted mb-0">Le résultat s’affichera ici après géolocalisation.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="section-card h-100">
+                <div id="nearestMap" class="map-frame large"></div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+window.MAP_TARGET = 'nearestMap';
+window.MAP_MODE = 'nearest';
+window.FOCUS_ID = {{ request.args.get('focus')|tojson }};
+</script>
+{% endblock %}

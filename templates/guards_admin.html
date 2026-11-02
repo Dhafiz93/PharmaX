@@ -1,0 +1,116 @@
+{% extends 'admin_base.html' %}
+{% block title %}Gardes - PharmaX{% endblock %}
+{% block page_title %}Gardes{% endblock %}
+
+{% block content %}
+
+<div class="adm-card">
+  <h2 class="adm-card-title">Ajouter une période de garde</h2>
+  <p class="adm-card-subtitle">
+    Choisissez la pharmacie, puis la date de début et la date de fin.
+    Tous les jours compris entre les deux sont enregistrés.
+  </p>
+
+  <form method="post" class="adm-guard-form">
+    <div class="grow">
+      <label class="adm-label" for="pharmacyId">Pharmacie</label>
+      <select class="adm-select" id="pharmacyId" name="pharmacy_id" required>
+        <option value="">Choisir une pharmacie...</option>
+        {% for p in pharmacies %}
+        <option value="{{ p.id }}">{{ p.name }}{% if p.quartier %} — {{ p.quartier }}{% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="adm-label" for="dateDebut">Début de garde</label>
+      <input type="date" class="adm-input" id="dateDebut" name="date_debut" value="{{ today }}" required>
+    </div>
+
+    <div>
+      <label class="adm-label" for="dateFin">Fin de garde</label>
+      <input type="date" class="adm-input" id="dateFin" name="date_fin" value="{{ today }}" required>
+    </div>
+
+    <div class="adm-guard-submit">
+      <button class="adm-btn" type="submit"><i class="ri-add-line"></i> Enregistrer</button>
+    </div>
+  </form>
+</div>
+
+<div class="adm-card" style="padding:0;">
+  <div style="padding:20px 20px 0; display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+    <div>
+      <h2 class="adm-card-title">Périodes de garde</h2>
+      <p class="adm-card-subtitle" style="margin:0;">
+        {{ periodes|length }} période(s), triées par pharmacie puis par date.
+      </p>
+    </div>
+    <input type="search" id="guardFilter" class="adm-input pill" style="max-width: 260px;"
+           placeholder="Filtrer par pharmacie ou quartier">
+  </div>
+
+  <div class="adm-table-wrap" style="margin-top:14px;">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>Pharmacie</th>
+          <th>Quartier</th>
+          <th>Début de garde</th>
+          <th>Fin de garde</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ligne in periodes %}
+        <tr data-search="{{ (ligne.name ~ ' ' ~ (ligne.quartier or ''))|lower }}">
+          <td class="strong">{{ ligne.name }}</td>
+          <td class="muted">{{ ligne.quartier or '—' }}</td>
+          <td>{{ ligne.start }}</td>
+          <td>{{ ligne.end }}</td>
+          <td>
+            <form method="post" action="{{ url_for('delete_guard_period') }}"
+                  onsubmit="return confirm('Supprimer cette période de garde ?');">
+              <input type="hidden" name="pharmacy_id" value="{{ ligne.id }}">
+              <input type="hidden" name="start" value="{{ ligne.start }}">
+              <input type="hidden" name="end" value="{{ ligne.end }}">
+              <button class="adm-icon-btn danger" type="submit" title="Supprimer"><i class="ri-delete-bin-line"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">
+          <div class="adm-empty"><i class="ri-calendar-line"></i>Aucune garde enregistrée pour le moment.</div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  /* La date de fin ne peut pas précéder la date de début */
+  var debut = document.getElementById('dateDebut');
+  var fin = document.getElementById('dateFin');
+  if (debut && fin) {
+    fin.min = debut.value;
+    debut.onchange = function () {
+      fin.min = debut.value;
+      if (fin.value < debut.value) fin.value = debut.value;
+    };
+  }
+
+  var filtre = document.getElementById('guardFilter');
+  if (filtre) {
+    filtre.oninput = function () {
+      var q = filtre.value.trim().toLowerCase();
+      document.querySelectorAll('tr[data-search]').forEach(function (ligne) {
+        ligne.style.display = ligne.dataset.search.indexOf(q) === -1 ? 'none' : '';
+      });
+    };
+  }
+</script>
+{% endblock %}

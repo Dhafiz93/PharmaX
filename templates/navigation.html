@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Navigation live - PharmaGeo Lomé{% endblock %}
+{% block content %}
+<section class="container section-space">
+    <div class="section-header fade-up">
+        <h1 class="page-title">Navigation live vers une pharmacie</h1>
+        <p class="page-subtitle">Cette page suit votre position en continu, recalcule le trajet quand vous bougez et anime le déplacement sur la carte. Le rendu reste web, donc très proche d’un guidage GPS, sans être une application native Google Maps.</p>
+    </div>
+    <div class="row g-4 align-items-stretch">
+        <div class="col-xl-4 fade-up">
+            <div class="section-card h-100 sticky-panel nav-side-panel">
+                <div class="nav-mode-grid mb-4">
+                    <button class="mode-chip active" data-mode-value="guard-nearest" id="modeGuardBtn" type="button">Garde la plus proche</button>
+                    <button class="mode-chip" data-mode-value="nearest" id="modeNearestBtn" type="button">Pharmacie la plus proche</button>
+                    <button class="mode-chip" data-mode-value="selected" id="modeSelectedBtn" type="button">Pharmacie choisie</button>
+                </div>
+
+                <div class="mb-3" id="selectedPharmacyWrap">
+                    <label class="form-label fw-semibold">Choisir une pharmacie</label>
+                    <select class="form-select form-select-lg" id="pharmacySelect">
+                        <option value="">Sélectionnez une pharmacie</option>
+                        {% for item in features %}
+                        <option value="{{ item.id }}" {% if selected_pharmacy and item.id == selected_pharmacy.id %}selected{% endif %}>{{ item.name }}{% if item.quartier %} — {{ item.quartier }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="d-grid gap-2 mb-3">
+                    <button class="btn btn-primary btn-lg" id="startGuidanceBtn" type="button">Démarrer le guidage live</button>
+                    <button class="btn btn-outline-danger" id="stopGuidanceBtn" type="button">Arrêter le guidage</button>
+                </div>
+
+                <div class="d-grid gap-2 mb-4">
+                    <button class="btn btn-outline-primary" id="recenterBtn" type="button">Recentrer la carte</button>
+                    <button class="btn btn-outline-secondary" id="showAllBtn" type="button">Voir toutes les pharmacies</button>
+                </div>
+
+                <div class="switch-list mb-4">
+                    <label class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="followUserToggle" checked>
+                        <span class="form-check-label">Suivre automatiquement ma position</span>
+                    </label>
+                    <label class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="soundToggle">
+                        <span class="form-check-label">Bip d’alerte quand on s’écarte du trajet</span>
+                    </label>
+                </div>
+
+                <div class="live-banner mb-3" id="liveBanner">
+                    <div>
+                        <small class="text-uppercase text-muted d-block">Prochaine instruction</small>
+                        <strong id="nextInstruction">Touchez “Démarrer le guidage live”.</strong>
+                    </div>
+                    <span class="live-pulse"></span>
+                </div>
+
+                <div class="route-metrics mb-3">
+                    <div class="metric-card">
+                        <small>Distance restante</small>
+                        <strong id="remainingDistance">—</strong>
+                    </div>
+                    <div class="metric-card">
+                        <small>Temps estimé</small>
+                        <strong id="remainingDuration">—</strong>
+                    </div>
+                    <div class="metric-card">
+                        <small>Vitesse</small>
+                        <strong id="currentSpeed">—</strong>
+                    </div>
+                    <div class="metric-card">
+                        <small>Précision GPS</small>
+                        <strong id="gpsAccuracy">—</strong>
+                    </div>
+                </div>
+
+                <div class="progress-shell mb-4">
+                    <div class="progress-label d-flex justify-content-between"><span>Progression sur le trajet</span><span id="progressValue">0%</span></div>
+                    <div class="progress route-progress"><div class="progress-bar" id="routeProgressBar" role="progressbar" style="width:0%"></div></div>
+                </div>
+
+                <div class="result-panel" id="routeResult">
+                    <p class="text-muted mb-0">Le guidage va afficher ici la destination, le résumé du trajet et les instructions principales.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8 fade-up delay-1">
+            <div class="section-card h-100">
+                <div class="map-toolbar mb-3">
+                    <div class="legend-chip"><span class="legend-dot dot-user"></span> Vous</div>
+                    <div class="legend-chip"><span class="legend-dot dot-destination"></span> Destination</div>
+                    <div class="legend-chip"><span class="legend-dot dot-route"></span> Route restante</div>
+                    <div class="legend-chip"><span class="legend-dot dot-trail"></span> Parcours effectué</div>
+                </div>
+                <div id="routeMap" class="map-frame large"></div>
+                <div class="mt-3 guidance-hint text-muted small">Astuce : gardez la page ouverte sur votre téléphone et acceptez la géolocalisation précise pour un guidage plus fluide.</div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+window.PHARMACIES_DATA = {{ features|tojson }};
+window.MAP_TARGET = 'routeMap';
+window.MAP_MODE = 'navigation';
+window.PRESELECTED_PHARMACY_ID = {{ selected_pharmacy.id if selected_pharmacy else 'null' }};
+window.PRESELECTED_ROUTE_MODE = {{ request.args.get('mode', ('selected' if selected_pharmacy else 'guard-nearest'))|tojson }};
+</script>
+{% endblock %}

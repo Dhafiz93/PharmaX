@@ -1,0 +1,148 @@
+{% extends 'admin_base.html' %}
+{% block title %}Gestion des utilisateurs - PharmaX{% endblock %}
+{% block page_title %}Gestion des utilisateurs{% endblock %}
+
+{% block page_actions %}
+<button class="adm-btn ghost" type="button" onclick="toggleUserForm(true)">Nouvel utilisateur</button>
+{% endblock %}
+
+{% block content %}
+
+<nav class="adm-breadcrumb">
+  <a href="{{ url_for('dashboard') }}">PharmaX</a> &rsaquo;
+  <a href="{{ url_for('dashboard') }}">Administration</a> &rsaquo;
+  <span>Utilisateurs</span>
+</nav>
+
+<div class="adm-toolbar">
+  <span class="adm-card-subtitle" style="margin:0;">{{ users|length }} utilisateur(s)</span>
+  <button class="adm-btn" type="button" onclick="toggleUserForm()"><i class="ri-add-line"></i> Nouvel utilisateur</button>
+</div>
+
+<!-- Formulaire de création -->
+<div class="adm-card {% if not get_flashed_messages() %}hidden-form{% endif %}" id="userForm">
+  <h2 class="adm-card-title">Créer un compte</h2>
+  <p class="adm-card-subtitle">
+    Les comptes « Utilisateur » accèdent à l'annuaire, aux favoris et aux alertes.
+    Les comptes « Administrateur » accèdent en plus à cette console.
+  </p>
+  <form method="post" class="adm-user-grid">
+    <div>
+      <label class="adm-label" for="nu">Pseudo</label>
+      <input class="adm-input" id="nu" name="username" placeholder="ex. kodjo" required>
+    </div>
+    <div>
+      <label class="adm-label" for="nf">Nom complet</label>
+      <input class="adm-input" id="nf" name="full_name" placeholder="ex. Kodjo Amegan">
+    </div>
+    <div>
+      <label class="adm-label" for="ne">E-mail</label>
+      <input class="adm-input" id="ne" type="email" name="email" placeholder="kodjo@exemple.tg" required>
+    </div>
+    <div>
+      <label class="adm-label" for="np">Téléphone</label>
+      <input class="adm-input" id="np" type="tel" name="phone" placeholder="+228 90 00 00 00" required>
+    </div>
+    <div>
+      <label class="adm-label" for="nw">Mot de passe</label>
+      <input class="adm-input" id="nw" type="password" name="password" minlength="6" required>
+    </div>
+    <div>
+      <label class="adm-label" for="nc">Confirmer le mot de passe</label>
+      <input class="adm-input" id="nc" type="password" name="password_confirm" minlength="6" required>
+    </div>
+    <div>
+      <label class="adm-label" for="nr">Rôle</label>
+      <select class="adm-select" id="nr" name="role">
+        <option value="user">Utilisateur</option>
+        <option value="admin">Administrateur</option>
+      </select>
+    </div>
+    <div class="adm-user-grid-actions">
+      <button class="adm-btn" type="submit"><i class="ri-user-add-line"></i> Créer le compte</button>
+      <button class="adm-btn ghost" type="button" onclick="toggleUserForm(false)">Annuler</button>
+    </div>
+  </form>
+</div>
+
+<!-- Tableau des comptes -->
+<div class="adm-card" style="padding:0;">
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Email</th>
+          <th>Téléphone</th>
+          <th>Rôle</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        {% set is_active = (u.status or 'active') == 'active' %}
+        <tr>
+          <td>
+            <div class="adm-user-cell">
+              <span class="adm-user-avatar">{{ u.username[0] | upper }}</span>
+              <div>
+                <strong>{{ u.username }}</strong>
+                {% if u.full_name %}<small>{{ u.full_name }}</small>{% endif %}
+              </div>
+            </div>
+          </td>
+          <td class="muted">{{ u.email or '—' }}</td>
+          <td class="muted">{{ u.phone or '—' }}</td>
+          <td>
+            <form method="post" action="{{ url_for('update_user_role', user_id=u.id) }}">
+              <select class="adm-role-select {{ u.role }}" name="role" onchange="this.form.submit()">
+                <option value="user" {% if u.role != 'admin' %}selected{% endif %}>user</option>
+                <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>admin</option>
+              </select>
+            </form>
+          </td>
+          <td>
+            {% if is_active %}<span class="adm-pill green">Actif</span>
+            {% else %}<span class="adm-pill red">Désactivé</span>{% endif %}
+          </td>
+          <td>
+            <div class="adm-row-actions">
+              {% if u.username != session.get('username') %}
+              <form method="post" action="{{ url_for('toggle_user_status', user_id=u.id) }}">
+                <button class="adm-btn ghost small" type="submit">{{ 'Désactiver' if is_active else 'Réactiver' }}</button>
+              </form>
+              {% endif %}
+              <form method="post" action="{{ url_for('reset_user_password', user_id=u.id) }}"
+                    onsubmit="return confirm('Générer un nouveau mot de passe provisoire pour @{{ u.username }} ?');">
+                <button class="adm-btn warn small" type="submit">Reset MDP</button>
+              </form>
+              {% if u.username != session.get('username') %}
+              <form method="post" action="{{ url_for('delete_user', user_id=u.id) }}"
+                    onsubmit="return confirm('Supprimer définitivement @{{ u.username }} et ses favoris ?');">
+                <button class="adm-icon-btn danger" type="submit" title="Supprimer"><i class="ri-delete-bin-line"></i></button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function toggleUserForm(show) {
+    var form = document.getElementById('userForm');
+    var hidden = form.classList.contains('hidden-form');
+    form.classList.toggle('hidden-form', show === undefined ? !hidden : !show);
+    if (form.classList.contains('hidden-form')) return;
+    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document.getElementById('nu').focus();
+  }
+</script>
+{% endblock %}

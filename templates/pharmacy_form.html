@@ -1,0 +1,72 @@
+{% extends 'admin_base.html' %}
+{% block title %}{% if pharmacy %}Modifier{% else %}Ajouter{% endif %} une pharmacie - PharmaX{% endblock %}
+{% block page_title %}{% if pharmacy %}Modifier une pharmacie{% else %}Ajouter une pharmacie{% endif %}{% endblock %}
+
+{% block content %}
+<div class="adm-card">
+  <form method="post" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+
+    <div>
+      <label class="adm-label">Nom</label>
+      <input class="adm-input" name="name" value="{{ pharmacy.name if pharmacy else '' }}" required>
+    </div>
+    <div>
+      <label class="adm-label">Quartier</label>
+      <input class="adm-input" name="quartier" value="{{ pharmacy.quartier if pharmacy else '' }}">
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <label class="adm-label">Adresse</label>
+      <input class="adm-input" name="address" value="{{ pharmacy.address if pharmacy else '' }}">
+    </div>
+    <div>
+      <label class="adm-label">Téléphone</label>
+      <input class="adm-input" name="phone" value="{{ pharmacy.phone if pharmacy else '' }}">
+    </div>
+    <div>
+      <label class="adm-label">Email</label>
+      <input class="adm-input" name="email" value="{{ pharmacy.email if pharmacy else '' }}">
+    </div>
+    <div>
+      <label class="adm-label">Horaires</label>
+      <input class="adm-input" name="opening_hours" value="{{ pharmacy.opening_hours if pharmacy else '' }}">
+    </div>
+    <div>
+      <label class="adm-label">Statut</label>
+      <select class="adm-select" name="status">
+        <option value="active" {% if not pharmacy or pharmacy.status == 'active' %}selected{% endif %}>Actif</option>
+        <option value="inactive" {% if pharmacy and pharmacy.status == 'inactive' %}selected{% endif %}>Inactif</option>
+      </select>
+    </div>
+    <div>
+      <label class="adm-label">Latitude</label>
+      <input class="adm-input" name="latitude" value="{{ pharmacy.latitude if pharmacy else '' }}" required>
+    </div>
+    <div>
+      <label class="adm-label">Longitude</label>
+      <input class="adm-input" name="longitude" value="{{ pharmacy.longitude if pharmacy else '' }}" required>
+    </div>
+    <div>
+      <label class="adm-label">Précision (m)</label>
+      <input class="adm-input" name="accuracy" value="{{ pharmacy.accuracy if pharmacy else '' }}">
+    </div>
+    <div>
+      <label class="adm-label">Fournisseur</label>
+      <input class="adm-input" name="provider" value="{{ pharmacy.provider if pharmacy else '' }}">
+    </div>
+    <div>
+      <label class="adm-label">Date source</label>
+      <input class="adm-input" name="source_time" value="{{ pharmacy.source_time if pharmacy else '' }}">
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <label class="adm-label">Tags</label>
+      <input class="adm-input" name="tags" value="{{ pharmacy.tags if pharmacy else '' }}">
+    </div>
+
+    <div style="grid-column: 1 / -1; display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="adm-btn" type="submit"><i class="ri-save-line"></i> Enregistrer</button>
+      <a href="{{ url_for('admin_pharmacies') }}" class="adm-btn ghost">Annuler</a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}

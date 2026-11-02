@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#00a86b">
+<title>Annuaire des pharmacies — PharmaX</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/topbar.css') }}">
+{% include '_head_pwa.html' %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app-ui.css') }}">
+</head>
+<body class="ui-body">
+
+{% include '_topbar.html' %}
+
+<main class="ui-main">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="ui-flash-stack">
+      {% for category, message in messages %}
+      <div class="ui-flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="directory-search">
+    <form method="get" class="search-field">
+      <i class="ri-search-line"></i>
+      <input type="search" name="search" value="{{ search }}" placeholder="Rechercher une pharmacie, un quartier...">
+      {% if guard_only %}<input type="hidden" name="guard_only" value="1">{% endif %}
+    </form>
+
+    <div class="directory-filters">
+      <a class="filter-chip {% if guard_only %}active{% endif %}"
+         href="{{ url_for('pharmacies', search=search or None, guard_only=None if guard_only else 1) }}">
+        De garde
+      </a>
+      <span class="result-count">{{ pharmacies|length }} résultat(s)</span>
+    </div>
+  </div>
+
+  <div class="pharmacy-list">
+    {% for item in pharmacies %}
+    <article class="pharmacy-item">
+      <div class="pharmacy-top">
+        <span class="pharmacy-mark"><i class="ri-add-line"></i></span>
+        <div class="pharmacy-info">
+          <strong>{{ item.name }}</strong>
+          <div class="address">{{ item.address or item.quartier or 'Adresse à compléter' }}</div>
+          {% if item.phone %}<div class="phone">{{ item.phone }}</div>{% endif %}
+        </div>
+        {% if item.is_on_guard %}
+        <span class="ui-badge on-duty">Ouvert · De garde</span>
+        {% else %}
+        <span class="ui-badge off-duty">Pas de garde</span>
+        {% endif %}
+      </div>
+
+      {% if item.duty_start %}
+      <div class="duty-band">
+        <i class="ri-calendar-line"></i>
+        <span><b>Garde :</b> {{ item.duty_start }} au {{ item.duty_end }}</span>
+      </div>
+      {% endif %}
+
+      <div class="pharmacy-actions">
+        {% if item.phone %}
+        <a class="ui-btn call" href="tel:{{ item.phone }}"><i class="ri-phone-line"></i> Appeler</a>
+        {% endif %}
+        <a class="ui-btn route" href="{{ url_for('navigation_page', focus=item.id) }}"><i class="ri-navigation-line"></i> Itinéraire</a>
+        <button class="fav-toggle {% if item.id in favorites %}is-fav{% endif %}"
+                type="button" data-id="{{ item.id }}"
+                aria-label="Ajouter aux favoris">
+          <i class="ri-heart-{% if item.id in favorites %}fill{% else %}line{% endif %}"></i>
+        </button>
+      </div>
+    </article>
+    {% else %}
+    <div class="ui-empty">
+      <div class="circle"><i class="ri-search-line"></i></div>
+      <p>Aucune pharmacie ne correspond à cette recherche.</p>
+      <a href="{{ url_for('pharmacies') }}" class="ui-btn-outline">Réinitialiser</a>
+    </div>
+    {% endfor %}
+  </div>
+
+</main>
+
+<script>
+  document.querySelectorAll('.fav-toggle').forEach(function (btn) {
+    btn.onclick = function () {
+      var icon = btn.querySelector('i');
+      btn.disabled = true;
+      fetch('{{ url_for("toggle_favorite", pharmacy_id=0) }}'.replace('/0', '/' + btn.dataset.id), {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'fetch' }
+      })
+      .then(function (r) {
+        if (r.status === 401) { location.href = '{{ url_for("register") }}'; return null; }
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data) return;
+        btn.classList.toggle('is-fav', data.active);
+        icon.className = data.active ? 'ri-heart-fill' : 'ri-heart-line';
+      })
+      .catch(function () {})
+      .finally(function () { btn.disabled = false; });
+    };
+  });
+</script>
+{% include '_splash.html' %}
+<script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+</body>
+</html>

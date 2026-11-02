@@ -1,0 +1,176 @@
+{# Menu commun PharmaX. Onglet actif deduit de request.endpoint. #}
+{% set ep = request.endpoint %}
+<div class="app-topbar">
+
+  <!-- Bandeau vert -->
+  <header class="top-header">
+    <div class="top-left">
+      <button class="top-burger" id="navBurger" type="button" aria-label="Ouvrir le menu"><i class="ri-menu-line"></i></button>
+      <a class="top-logo" href="{{ url_for('assistant_chat') }}" aria-label="PharmaX">
+        <img src="{{ url_for('static', filename='img/logo-icon.png') }}" alt="PharmaX">
+      </a>
+      {% if user_logged_in %}
+      <a class="top-identity" href="{{ url_for('favorites') }}">
+        <span class="top-avatar">{{ user_initials }}</span>
+        <span class="top-identity-text">
+          <strong>{{ user_display_name }} <em>• En ligne</em></strong>
+          <small>{{ user_email or '@' ~ session.get('username', '') }}</small>
+        </span>
+      </a>
+      {% else %}
+      <span class="top-identity">
+        <span class="top-avatar">?</span>
+        <span class="top-identity-text"><strong>Invité <em>•</em></strong></span>
+      </span>
+      {% endif %}
+    </div>
+    <div class="top-right">
+      {% if user_logged_in %}
+      <a class="btn-top" href="{{ url_for('garde') }}" title="Pharmacies de garde aujourd'hui">{{ stats.guard_today }} de garde</a>
+      {% else %}
+      <span class="btn-top">{{ stats.guard_today }} de garde</span>
+      {% endif %}
+      {% if user_logged_in %}
+      <a class="btn-top" href="{{ url_for('notifications') }}" title="Mes alertes de garde">
+        <i class="ri-notification-3-line"></i>
+        <span class="btn-top-label">Alertes</span>
+        {% if unread_alerts %}<span class="top-badge">{{ unread_alerts }}</span>{% endif %}
+      </a>
+      <a class="btn-top" href="{{ url_for('favorites') }}" title="Mes pharmacies favorites"><i class="ri-heart-line"></i> <span class="btn-top-label">Favoris</span></a>
+      {% endif %}
+      {% if user_is_admin %}
+      <a class="btn-top" href="{{ url_for('dashboard') }}"><i class="ri-shield-user-line"></i> <span class="btn-top-label">Admin</span></a>
+      {% endif %}
+      {% if user_logged_in %}
+      <a class="btn-top" href="{{ url_for('logout') }}"><i class="ri-logout-box-r-line"></i> <span class="btn-top-label">Se déconnecter</span></a>
+      {% else %}
+      <a class="btn-top" href="{{ url_for('login') }}"><i class="ri-login-box-line"></i> <span class="btn-top-label">Se connecter</span></a>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- Bandeau mode invité -->
+  {% if not user_logged_in %}
+  <div class="info-banner">
+    <span><b>Mode invité</b> — L'assistant et le guidage sont accessibles. Créez un compte pour l'annuaire, la carte, vos favoris et les alertes de garde.</span>
+    <a href="{{ url_for('register') }}">Créer un compte &rarr;</a>
+  </div>
+  {% endif %}
+
+  <!-- Onglets -->
+  <nav class="nav-bar">
+    <a class="nav-item {% if ep == 'assistant_chat' %}active{% endif %}" href="{{ url_for('assistant_chat') }}"><i class="ri-chat-3-line"></i> Assistant</a>
+    <a class="nav-item {% if ep in ['navigation_page', 'nearest_page'] %}active{% endif %}" href="{{ url_for('navigation_page') }}"><i class="ri-navigation-line"></i> Navigation Live</a>
+
+    {% if user_logged_in %}
+    <a class="nav-item {% if ep == 'carte' %}active{% endif %}" href="{{ url_for('carte') }}"><i class="ri-map-pin-line"></i> Carte</a>
+    <a class="nav-item {% if ep in ['pharmacies', 'pharmacy_detail', 'garde'] %}active{% endif %}" href="{{ url_for('pharmacies') }}"><i class="ri-list-check"></i> Annuaire</a>
+    <a class="nav-item {% if ep in ['favorites', 'notifications', 'dashboard'] %}active{% endif %}" href="{{ url_for('favorites') }}"><i class="ri-user-line"></i> Profil</a>
+    {% else %}
+    <a class="nav-item locked" href="{{ url_for('register') }}" title="Compte requis"><i class="ri-map-pin-line"></i> Carte <i class="ri-lock-line lock"></i></a>
+    <a class="nav-item locked" href="{{ url_for('register') }}" title="Compte requis"><i class="ri-list-check"></i> Annuaire <i class="ri-lock-line lock"></i></a>
+    <a class="nav-item locked {% if ep in ['login', 'register', 'index'] %}active{% endif %}" href="{{ url_for('register') }}"><i class="ri-user-line"></i> Profil <i class="ri-lock-line lock"></i></a>
+    {% endif %}
+  </nav>
+
+</div>
+
+<!-- Navigation basse, visible uniquement sur mobile -->
+<nav class="bottom-nav">
+  <a class="{% if ep == 'assistant_chat' %}active{% endif %}" href="{{ url_for('assistant_chat') }}">
+    <i class="ri-chat-3-line"></i><span>Assistant</span>
+  </a>
+  <a class="{% if ep in ['navigation_page', 'nearest_page'] %}active{% endif %}" href="{{ url_for('navigation_page') }}">
+    <i class="ri-navigation-line"></i><span>Guidage</span>
+  </a>
+  {% if user_logged_in %}
+  <a class="{% if ep in ['pharmacies', 'pharmacy_detail', 'garde'] %}active{% endif %}" href="{{ url_for('pharmacies') }}">
+    <i class="ri-list-check"></i><span>Annuaire</span>
+  </a>
+  <a class="{% if ep in ['favorites', 'notifications'] %}active{% endif %}" href="{{ url_for('favorites') }}">
+    <i class="ri-user-line"></i><span>Profil</span>
+    {% if unread_alerts %}<span class="bottom-dot"></span>{% endif %}
+  </a>
+  {% else %}
+  <a class="locked" href="{{ url_for('register') }}"><i class="ri-list-check"></i><span>Annuaire</span></a>
+  <a class="locked {% if ep in ['login', 'register', 'index'] %}active{% endif %}" href="{{ url_for('register') }}">
+    <i class="ri-user-line"></i><span>Profil</span>
+  </a>
+  {% endif %}
+</nav>
+
+<!-- Tiroir de navigation mobile (défilable) -->
+<div class="nav-drawer-backdrop" id="navDrawerBackdrop"></div>
+
+<aside class="nav-drawer" id="navDrawer" aria-label="Menu de navigation">
+  <div class="nav-drawer-head">
+    <span class="nav-drawer-avatar">{{ user_initials if user_logged_in else '?' }}</span>
+    <div class="nav-drawer-id">
+      <strong>{{ user_display_name if user_logged_in else 'Invité' }}</strong>
+      <small>{{ (user_email or '@' ~ session.get('username', '')) if user_logged_in else 'Non connecté' }}</small>
+    </div>
+    <button class="nav-drawer-close" id="navDrawerClose" type="button" aria-label="Fermer le menu"><i class="ri-close-line"></i></button>
+  </div>
+
+  <nav class="nav-drawer-links">
+    <a href="{{ url_for('assistant_chat') }}" class="{% if ep == 'assistant_chat' %}active{% endif %}">
+      <i class="ri-chat-3-line"></i> Assistant
+    </a>
+    <a href="{{ url_for('navigation_page') }}" class="{% if ep in ['navigation_page', 'nearest_page'] %}active{% endif %}">
+      <i class="ri-navigation-line"></i> Guidage GPS
+    </a>
+
+    {% if user_logged_in %}
+    <a href="{{ url_for('carte') }}" class="{% if ep == 'carte' %}active{% endif %}">
+      <i class="ri-map-pin-line"></i> Carte des pharmacies
+    </a>
+    <a href="{{ url_for('pharmacies') }}" class="{% if ep in ['pharmacies', 'pharmacy_detail'] %}active{% endif %}">
+      <i class="ri-list-check"></i> Annuaire
+    </a>
+    <a href="{{ url_for('garde') }}" class="{% if ep == 'garde' %}active{% endif %}">
+      <i class="ri-hospital-line"></i> De garde aujourd'hui
+      <span class="drawer-count">{{ stats.guard_today }}</span>
+    </a>
+
+    <div class="nav-drawer-separator"></div>
+
+    <a href="{{ url_for('favorites', onglet='alertes') }}" class="{% if ep == 'favorites' %}active{% endif %}">
+      <i class="ri-notification-3-line"></i> Mes alertes
+      {% if unread_alerts %}<span class="drawer-count warn">{{ unread_alerts }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('favorites', onglet='favoris') }}"><i class="ri-heart-line"></i> Mes favoris</a>
+    <a href="{{ url_for('favorites', onglet='recherches') }}"><i class="ri-time-line"></i> Mes recherches</a>
+
+    {% if user_is_admin %}
+    <div class="nav-drawer-separator"></div>
+    <a href="{{ url_for('dashboard') }}"><i class="ri-shield-user-line"></i> Console d'administration</a>
+    {% endif %}
+
+    <div class="nav-drawer-separator"></div>
+    <a href="{{ url_for('logout') }}" class="drawer-danger"><i class="ri-logout-box-r-line"></i> Se déconnecter</a>
+
+    {% else %}
+    <a href="{{ url_for('register') }}" class="locked"><i class="ri-map-pin-line"></i> Carte <i class="ri-lock-line drawer-lock"></i></a>
+    <a href="{{ url_for('register') }}" class="locked"><i class="ri-list-check"></i> Annuaire <i class="ri-lock-line drawer-lock"></i></a>
+    <a href="{{ url_for('register') }}" class="locked"><i class="ri-heart-line"></i> Favoris et alertes <i class="ri-lock-line drawer-lock"></i></a>
+
+    <div class="nav-drawer-separator"></div>
+    <a href="{{ url_for('register') }}"><i class="ri-user-add-line"></i> Créer un compte</a>
+    <a href="{{ url_for('login') }}"><i class="ri-login-box-line"></i> Se connecter</a>
+    {% endif %}
+  </nav>
+</aside>
+
+<script>
+  (function () {
+    var body = document.body;
+    var burger = document.getElementById('navBurger');
+    var close = document.getElementById('navDrawerClose');
+    var backdrop = document.getElementById('navDrawerBackdrop');
+    function shut() { body.classList.remove('nav-drawer-open'); }
+    if (burger) burger.onclick = function () { body.classList.toggle('nav-drawer-open'); };
+    if (close) close.onclick = shut;
+    if (backdrop) backdrop.onclick = shut;
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') shut(); });
+  })();
+</script>
