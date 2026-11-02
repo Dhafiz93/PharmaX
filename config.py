@@ -2,7 +2,7 @@ import os
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DATABASE = os.path.join(BASE_DIR, 'data', 'pharmacies.db')
-SECRET_KEY = 'changez-cette-cle-secrete-en-production'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'changez-cette-cle-secrete-en-production')
 DEFAULT_CENTER = (6.2115, 1.1829)
 DEFAULT_ZOOM = 12
 
